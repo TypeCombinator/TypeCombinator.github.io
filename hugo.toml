@@ -9,3 +9,10 @@ defaultContentLanguage = 'zh-cn'
   _merge = "shallow"
 [taxonomies]
   _merge = "shallow"
+
+[params]
+  [params.author]
+    name = "TypeCombinator"
+    email = "typecombinator@foxmail.com"
+    link = "https://github.com/TypeCombinator"
+    avatar = "https://github.com/TypeCombinator.png"

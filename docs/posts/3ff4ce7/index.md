@@ -134,6 +134,6 @@ static constexpr auto gen() -> size_t {
 
 ---
 
-> 作者: TypeCombinator  
+> 作者: [TypeCombinator](https://github.com/TypeCombinator)  
 > URL: https://typecombinator.github.io/posts/3ff4ce7/  
 

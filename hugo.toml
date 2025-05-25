@@ -1,0 +1,11 @@
+baseURL = 'https://typecombinator.github.io'
+languageCode = 'en-us'
+title = 'TypeCombinator Home'
+theme = 'FixIt'
+defaultContentLanguage = 'zh-cn'
+[markup]
+  _merge = "shallow"
+[outputs]
+  _merge = "shallow"
+[taxonomies]
+  _merge = "shallow"

@@ -16,3 +16,6 @@ defaultContentLanguage = 'zh-cn'
     email = "typecombinator@foxmail.com"
     link = "https://github.com/TypeCombinator"
     avatar = "https://github.com/TypeCombinator.png"
+
+  [params.page.code]
+    maxShownLines = 1000

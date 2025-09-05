@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html itemscope itemtype="http://schema.org/WebPage" lang="en-us">
+  <head>
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+    <meta name="robots" content="noodp" />
+    <title>forward_like_tuple - TypeCombinator Home</title><meta name="author" content="TypeCombinator">
+<meta name="description" content="「把一个人的温暖转移到另一个的胸膛」
+——陈奕迅《爱情转移》
+前言 C&#43;&#43;23语核更新太少，一直没有动力去升级，不过考虑到明年是2026年了，26年用C&#43;&#43;23还算合理吧？C&#43;&#43;23中，能大幅简化代码的特性，首当其冲的恐怕就是deducing this了，于是先使用该特性对代码进行了一番改造，终于不用再反复写&amp;、const &amp;、&amp;&amp;和const &amp;&amp;这几种成员函数了，搭配上forward_like，一个成员函数即覆盖所有情形，起初还算顺利，但是改造在tuple时却碰到了单元测试编译报错的问题，一探之下，发现forward_like并不适用于tuple的get方法。
+"><meta name="keywords" content='blog'>
+  <meta itemprop="name" content="forward_like_tuple">
+  <meta itemprop="description" content="「把一个人的温暖转移到另一个的胸膛」
+——陈奕迅《爱情转移》
+前言 C&#43;&#43;23语核更新太少，一直没有动力去升级，不过考虑到明年是2026年了，26年用C&#43;&#43;23还算合理吧？C&#43;&#43;23中，能大幅简化代码的特性，首当其冲的恐怕就是deducing this了，于是先使用该特性对代码进行了一番改造，终于不用再反复写&amp;、const &amp;、&amp;&amp;和const &amp;&amp;这几种成员函数了，搭配上forward_like，一个成员函数即覆盖所有情形，起初还算顺利，但是改造在tuple时却碰到了单元测试编译报错的问题，一探之下，发现forward_like并不适用于tuple的get方法。">
+  <meta itemprop="datePublished" content="2025-09-05T21:41:02+08:00">
+  <meta itemprop="dateModified" content="2025-09-05T21:41:02+08:00">
+  <meta itemprop="wordCount" content="1114">
+  <meta itemprop="keywords" content="Blog"><meta property="og:url" content="https://typecombinator.github.io/posts/4af8519/">
+  <meta property="og:site_name" content="TypeCombinator Home">
+  <meta property="og:title" content="forward_like_tuple">
+  <meta property="og:description" content="「把一个人的温暖转移到另一个的胸膛」
+——陈奕迅《爱情转移》
+前言 C&#43;&#43;23语核更新太少，一直没有动力去升级，不过考虑到明年是2026年了，26年用C&#43;&#43;23还算合理吧？C&#43;&#43;23中，能大幅简化代码的特性，首当其冲的恐怕就是deducing this了，于是先使用该特性对代码进行了一番改造，终于不用再反复写&amp;、const &amp;、&amp;&amp;和const &amp;&amp;这几种成员函数了，搭配上forward_like，一个成员函数即覆盖所有情形，起初还算顺利，但是改造在tuple时却碰到了单元测试编译报错的问题，一探之下，发现forward_like并不适用于tuple的get方法。">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-09-05T21:41:02+08:00">
+    <meta property="article:modified_time" content="2025-09-05T21:41:02+08:00">
+    <meta property="article:tag" content="Blog">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="forward_like_tuple">
+  <meta name="twitter:description" content="「把一个人的温暖转移到另一个的胸膛」
+——陈奕迅《爱情转移》
+前言 C&#43;&#43;23语核更新太少，一直没有动力去升级，不过考虑到明年是2026年了，26年用C&#43;&#43;23还算合理吧？C&#43;&#43;23中，能大幅简化代码的特性，首当其冲的恐怕就是deducing this了，于是先使用该特性对代码进行了一番改造，终于不用再反复写&amp;、const &amp;、&amp;&amp;和const &amp;&amp;这几种成员函数了，搭配上forward_like，一个成员函数即覆盖所有情形，起初还算顺利，但是改造在tuple时却碰到了单元测试编译报错的问题，一探之下，发现forward_like并不适用于tuple的get方法。">
+<meta name="application-name" content="FixIt">
+<meta name="apple-mobile-web-app-title" content="FixIt"><meta name="theme-color" data-light="#f8f8f8" data-dark="#252627" content="#f8f8f8"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="canonical" type="text/html" href="https://typecombinator.github.io/posts/4af8519/" title="forward_like_tuple - TypeCombinator Home" /><link rel="prev" type="text/html" href="https://typecombinator.github.io/posts/3ff4ce7/" title="简单点，元编程的方式简单点" /><link rel="alternate" type="text/markdown" href="https://typecombinator.github.io/posts/4af8519/index.md" title="forward_like_tuple - TypeCombinator Home"><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.removeAttribute('onload');this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.removeAttribute('onload');this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+  {
+    "@context": "http://schema.org",
+    "@type": "BlogPosting",
+    "headline": "forward_like_tuple",
+    "inLanguage": "en-us",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https:\/\/typecombinator.github.io\/posts\/4af8519\/"
+    },"genre": "posts","keywords": "blog","wordcount":  1114 ,
+    "url": "https:\/\/typecombinator.github.io\/posts\/4af8519\/","datePublished": "2025-09-05T21:41:02+08:00","dateModified": "2025-09-05T21:41:02+08:00","publisher": {
+      "@type": "Organization",
+      "name": ""},"author": {
+        "@type": "Person",
+        "name": "TypeCombinator"
+      },"description": ""
+  }
+  </script><script src="/js/head/color-scheme.min.js"></script></head>
+  <body data-header-desktop="sticky" data-header-mobile="auto"><div class="wrapper" data-page-style="normal"><header class="desktop animate__faster" id="header-desktop">
+  <div class="header-wrapper">
+    <div class="header-title">
+      <a href="/" title="TypeCombinator Home"><span class="header-title-text">TypeCombinator Home</span></a><span class="header-subtitle"></span></div>
+    <nav>
+      <ul class="menu"><li class="menu-item">
+              <a class="menu-link" href="/archives/"><i class="fa-solid fa-archive fa-fw fa-sm" aria-hidden="true"></i> Archives</a></li><li class="menu-item">
+              <a class="menu-link" href="/categories/"><i class="fa-solid fa-folder-tree fa-fw fa-sm" aria-hidden="true"></i> Categories</a></li><li class="menu-item">
+              <a class="menu-link" href="/tags/"><i class="fa-solid fa-tags fa-fw fa-sm" aria-hidden="true"></i> Tags</a></li><li class="menu-item delimiter"></li><li class="menu-item theme-switch" title="切换主题">
+          <i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i>
+        </li></ul>
+    </nav>
+  </div>
+</header><header class="mobile animate__faster" id="header-mobile">
+  <div class="header-container">
+    <div class="header-wrapper">
+      <div class="header-title">
+        <a href="/" title="TypeCombinator Home"><span class="header-title-text">TypeCombinator Home</span></a><span class="header-subtitle"></span></div>
+      <div class="menu-toggle" id="menu-toggle-mobile">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+    <nav>
+      <ul class="menu" id="menu-mobile"><li class="menu-item"><a class="menu-link" href="/archives/"><i class="fa-solid fa-archive fa-fw fa-sm" aria-hidden="true"></i> Archives</a></li><li class="menu-item"><a class="menu-link" href="/categories/"><i class="fa-solid fa-folder-tree fa-fw fa-sm" aria-hidden="true"></i> Categories</a></li><li class="menu-item"><a class="menu-link" href="/tags/"><i class="fa-solid fa-tags fa-fw fa-sm" aria-hidden="true"></i> Tags</a></li><li class="menu-item menu-system">
+          <span class="menu-system-item theme-switch" title="切换主题"><i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i></span></li>
+      </ul>
+    </nav>
+  </div>
+</header><main class="container"><aside class="aside-collection animate__animated animate__fadeIn animate__faster" aria-label="合集"></aside>
+
+  <article class="page single">
+    <div class="header"><h1 class="single-title animate__animated animate__flipInX"><span title="转载" class="icon-repost"><i class="fa-solid fa-share fa-fw" aria-hidden="true"></i></span><span>forward_like_tuple</span>
+      </h1></div><div class="post-meta">
+      <div class="post-meta-line"><span class="post-author"><a href="https://github.com/TypeCombinator" title="作者"target="_blank" rel="external nofollow noopener noreferrer author" class="author"><img class="avatar" src='https://github.com/TypeCombinator.png' alt="TypeCombinator" height="16" width="16">&nbsp;TypeCombinator</a></span><span class="post-included-in">&nbsp;收录于 <a href="/categories/c++/" class="post-category" title="分类 - C++"><i class="fa-regular fa-folder fa-fw" aria-hidden="true"></i> C++</a></span></div><div class="post-meta-line"><span title="发布于 2025-09-05 21:41:02"><i class="fa-solid fa-calendar-days fa-fw me-1" aria-hidden="true"></i><time datetime="2025-09-05">2025-09-05</time></span>&nbsp;<span title="1114 字"><i class="fa-solid fa-pencil-alt fa-fw me-1" aria-hidden="true"></i>约 1200 字</span>&nbsp;<span><i class="fa-regular fa-clock fa-fw me-1" aria-hidden="true"></i>预计阅读 6 分钟</span>&nbsp;</div>
+    </div><div class="details toc" id="toc-static" data-kept="false">
+        <div class="details-summary toc-title">
+          <span>目录</span>
+          <span><i class="details-icon fa-solid fa-angle-right" aria-hidden="true"></i></span>
+        </div>
+        <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#前言">前言</a></li>
+    <li><a href="#问题">问题</a></li>
+    <li><a href="#实现">实现</a></li>
+    <li><a href="#测试">测试</a></li>
+    <li><a href="#总结">总结</a></li>
+  </ul>
+</nav></div>
+      </div><div class="content" id="content"><p><em>「把一个人的温暖转移到另一个的胸膛」</em><br>
+——陈奕迅《爱情转移》</p>
+<h2 class="heading-element" id="前言"><span>前言</span>
+  <a href="#%e5%89%8d%e8%a8%80" class="heading-mark">
+    <svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg>
+  </a>
+</h2><p><em>C++23</em>语核更新太少，一直没有动力去升级，不过考虑到明年是2026年了，26年用<em>C++23</em>还算合理吧？<em>C++23</em>中，能大幅简化代码的特性，首当其冲的恐怕就是<strong>deducing this</strong>了，于是先使用该特性对代码进行了一番改造，终于不用再反复写<code>&amp;</code>、<code>const &amp;</code>、<code>&amp;&amp;</code>和<code>const &amp;&amp;</code>这几种成员函数了，搭配上<code>forward_like</code>，一个成员函数即覆盖所有情形，起初还算顺利，但是改造在<code>tuple</code>时却碰到了单元测试编译报错的问题，一探之下，发现<code>forward_like</code>并不适用于<code>tuple</code>的<code>get</code>方法。</p>
+<h2 class="heading-element" id="问题"><span>问题</span>
+  <a href="#%e9%97%ae%e9%a2%98" class="heading-mark">
+    <svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg>
+  </a>
+</h2><p>对于<code>std::tuple</code>，<code>get</code>函数的实现意图是为了将<code>tuple</code>中的成员的访问能力暴露出来，为了简化，这里用<code>struct</code>代替讨论，代码如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">struct</span> <span class="nc">foo</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="o">&amp;</span><span class="n">lvref_m</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">test</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">number</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">const</span> <span class="k">auto</span> <span class="o">&amp;</span><span class="n">obj</span> <span class="o">=</span> <span class="n">foo</span><span class="p">{</span><span class="n">number</span><span class="p">};</span>
+</span></span><span class="line"><span class="cl">    <span class="n">obj</span><span class="p">.</span><span class="n">lvref_m</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span> <span class="c1">// Okay!
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>可以看出，当<code>obj</code>为<code>const foo &amp;</code>类型时，需要暴露的<code>lvref_m</code>成员的类型应该是<code>int &amp;</code>，如果使用<code>forward_like</code>实现<code>get</code>方法，其返回类型将是<code>const int &amp;</code>，因为<code>forward_like</code>会把<code>const</code>限定符加到成员类型上，还有许多其他情形也不适用，这里不再赘述。摘取<strong>cppreference</strong>的<code>forward_like</code>实现，代码如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="k">class</span> <span class="nc">U</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="k">constexpr</span> <span class="k">auto</span><span class="o">&amp;&amp;</span> <span class="n">forward_like</span><span class="p">(</span><span class="n">U</span><span class="o">&amp;&amp;</span> <span class="n">x</span><span class="p">)</span> <span class="k">noexcept</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">constexpr</span> <span class="kt">bool</span> <span class="n">is_adding_const</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_const_v</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">remove_reference_t</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&gt;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="nf">constexpr</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">is_lvalue_reference_v</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&amp;&amp;&gt;</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="k">constexpr</span> <span class="p">(</span><span class="n">is_adding_const</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">as_const</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="k">return</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">U</span><span class="o">&amp;&gt;</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="nf">constexpr</span> <span class="p">(</span><span class="n">is_adding_const</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">as_const</span><span class="p">(</span><span class="n">x</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>这个实现很符合直觉，于是我心里却冒出疑问，对于<code>tuple</code>只能特殊处理了吗？细看之下才发现cppreference有如下描述：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">The main scenario that std::forward_like caters to is adapting “far” objects. Neither the tuple nor the language scenarios do the right thing for that main use-case, so the merge model is used for std::forward_like.</span></span></code></pre></td></tr></table>
+</div>
+</div><p>原来是我光顾着看代码了！<code>std::forward_like</code>确实不适用于<code>tuple</code>，这只是一个适用主要场景的实现，提案<strong>P2445</strong>提到了3种模型分别为<code>merge</code>、<code>tuple</code>和<code>language</code>，而<code>std::forward_like</code>使用的是<code>merge</code>模型。这3种模型的具体区别，摘取提案表格如下：</p>
+<table>
+  <thead>
+      <tr>
+          <th>Owner</th>
+          <th>Member</th>
+          <th>&lsquo;merge&rsquo;</th>
+          <th>&rsquo;tuple'</th>
+          <th>&rsquo;language'</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td></td>
+          <td><code>&amp;</code></td>
+          <td><code>&amp;&amp;</code></td>
+          <td><code>&amp;</code></td>
+          <td><code>&amp;</code></td>
+      </tr>
+      <tr>
+          <td><code>&amp;&amp;</code></td>
+          <td><code>&amp;</code></td>
+          <td><code>&amp;&amp;</code></td>
+          <td><code>&amp;</code></td>
+          <td><code>&amp;</code></td>
+      </tr>
+      <tr>
+          <td><code>const</code></td>
+          <td><code>&amp;</code></td>
+          <td><code>const &amp;&amp;</code></td>
+          <td><code>&amp;</code></td>
+          <td><code>&amp;</code></td>
+      </tr>
+      <tr>
+          <td><code>const &amp;</code></td>
+          <td><code>&amp;</code></td>
+          <td><code>const &amp;</code></td>
+          <td><code>&amp;</code></td>
+          <td><code>&amp;</code></td>
+      </tr>
+      <tr>
+          <td><code>const &amp;&amp;</code></td>
+          <td><code>&amp;</code></td>
+          <td><code>const &amp;&amp;</code></td>
+          <td><code>&amp;</code></td>
+          <td><code>&amp;</code></td>
+      </tr>
+      <tr>
+          <td></td>
+          <td><code>&amp;&amp;</code></td>
+          <td><code>&amp;&amp;</code></td>
+          <td><code>&amp;&amp;</code></td>
+          <td><code>&amp;</code></td>
+      </tr>
+      <tr>
+          <td><code>&amp;&amp;</code></td>
+          <td><code>&amp;&amp;</code></td>
+          <td><code>&amp;&amp;</code></td>
+          <td><code>&amp;&amp;</code></td>
+          <td><code>&amp;</code></td>
+      </tr>
+      <tr>
+          <td><code>const</code></td>
+          <td><code>&amp;&amp;</code></td>
+          <td><code>const &amp;&amp;</code></td>
+          <td><code>&amp;&amp;</code></td>
+          <td><code>&amp;</code></td>
+      </tr>
+      <tr>
+          <td><code>const &amp;</code></td>
+          <td><code>&amp;&amp;</code></td>
+          <td><code>const &amp;</code></td>
+          <td><code>&amp;</code></td>
+          <td><code>&amp;</code></td>
+      </tr>
+      <tr>
+          <td><code>const &amp;&amp;</code></td>
+          <td><code>&amp;&amp;</code></td>
+          <td><code>const &amp;&amp;</code></td>
+          <td><code>&amp;&amp;</code></td>
+          <td><code>&amp;</code></td>
+      </tr>
+      <tr>
+          <td></td>
+          <td><code>const &amp;</code></td>
+          <td><code>const &amp;&amp;</code></td>
+          <td><code>const &amp;</code></td>
+          <td><code>const &amp;</code></td>
+      </tr>
+      <tr>
+          <td><code>&amp;&amp;</code></td>
+          <td><code>const &amp;</code></td>
+          <td><code>const &amp;&amp;</code></td>
+          <td><code>const &amp;</code></td>
+          <td><code>const &amp;</code></td>
+      </tr>
+      <tr>
+          <td><code>const</code></td>
+          <td><code>const &amp;</code></td>
+          <td><code>const &amp;&amp;</code></td>
+          <td><code>const &amp;</code></td>
+          <td><code>const &amp;</code></td>
+      </tr>
+      <tr>
+          <td><code>const &amp;&amp;</code></td>
+          <td><code>const &amp;</code></td>
+          <td><code>const &amp;&amp;</code></td>
+          <td><code>const &amp;</code></td>
+          <td><code>const &amp;</code></td>
+      </tr>
+      <tr>
+          <td></td>
+          <td><code>const &amp;&amp;</code></td>
+          <td><code>const &amp;&amp;</code></td>
+          <td><code>const &amp;&amp;</code></td>
+          <td><code>const &amp;</code></td>
+      </tr>
+      <tr>
+          <td><code>&amp;&amp;</code></td>
+          <td><code>const &amp;&amp;</code></td>
+          <td><code>const &amp;&amp;</code></td>
+          <td><code>const &amp;&amp;</code></td>
+          <td><code>const &amp;</code></td>
+      </tr>
+      <tr>
+          <td><code>const</code></td>
+          <td><code>const &amp;&amp;</code></td>
+          <td><code>const &amp;&amp;</code></td>
+          <td><code>const &amp;&amp;</code></td>
+          <td><code>const &amp;</code></td>
+      </tr>
+      <tr>
+          <td><code>const &amp;&amp;</code></td>
+          <td><code>const &amp;&amp;</code></td>
+          <td><code>const &amp;&amp;</code></td>
+          <td><code>const &amp;&amp;</code></td>
+          <td><code>const &amp;</code></td>
+      </tr>
+  </tbody>
+</table>
+<h2 class="heading-element" id="实现"><span>实现</span>
+  <a href="#%e5%ae%9e%e7%8e%b0" class="heading-mark">
+    <svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg>
+  </a>
+</h2><p>对于<code>tuple</code>模型，<strong>Owner</strong>和<strong>Member</strong>值类别需要折叠，而<code>const</code>限定符则从成员继承。不得不说，最初看到提案给的原始代码时，我都怀疑这是一个<em>C++23</em>的提案，但考虑到都是为爱发电，瑕不掩瑜吧！这里给出一个更现代且更简单的<code>forward_like_tuple</code>的实现，代码如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">U</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="k">constexpr</span> <span class="k">auto</span> <span class="o">&amp;&amp;</span><span class="n">forward_like_tuple</span><span class="p">(</span><span class="k">auto</span> <span class="o">&amp;&amp;</span><span class="n">u</span><span class="p">)</span> <span class="k">noexcept</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">constexpr</span> <span class="k">auto</span> <span class="n">is_const_this</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_const_v</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">remove_reference_t</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&gt;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="nf">constexpr</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">is_lvalue_reference_v</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="k">constexpr</span> <span class="p">(</span><span class="n">is_const_this</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="k">return</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="k">const</span> <span class="n">U</span> <span class="o">&amp;&gt;</span><span class="p">(</span><span class="n">u</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="k">return</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">U</span> <span class="o">&amp;&gt;</span><span class="p">(</span><span class="n">u</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="nf">constexpr</span> <span class="p">(</span><span class="n">is_const_this</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="k">return</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="k">const</span> <span class="n">U</span> <span class="o">&amp;&amp;&gt;</span><span class="p">(</span><span class="n">u</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="k">return</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">U</span> <span class="o">&amp;&amp;&gt;</span><span class="p">(</span><span class="n">u</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>在实践时，笔者并没有使用上面给出的4个分支的版本，而是使用的3个分支的简化版本，但为契合提案和避免误导，就不必放出来了。当然，以上代码还不严谨，缺乏约束，<code>u</code>的推导类型和模板类型<code>U</code>需要相似，即，二者去除<code>cvref</code>之后是相同类型，定义如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">U</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="k">concept</span> <span class="n">is_similar</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">is_same_v</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">remove_cvref_t</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">remove_cvref_t</span><span class="o">&lt;</span><span class="n">U</span><span class="o">&gt;&gt;</span><span class="p">;</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>之所以没有直接加上约束，是因为其使用场景很窄，使用者应当清楚自己在做什么，而且约束中需要使用<code>std::remove_cvref_t</code>这样的<code>trait</code>，这种<code>trait</code>是使用模板类实现的，对于编译器来说，模板类实例化是要比函数重载更重的，使用<strong>deducing this</strong>简化代码的同时，尽量避免增加编译时间也至关重要。</p>
+<h2 class="heading-element" id="测试"><span>测试</span>
+  <a href="#%e6%b5%8b%e8%af%95" class="heading-mark">
+    <svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg>
+  </a>
+</h2><p>提案已经给了测试代码，避免了重复劳动，该测试代码包括了<code>std::tuple</code>作为对照测试，截取并删改后，完整测试代码见<a href="https://godbolt.org/z/86e4an4ne"target="_blank" rel="external nofollow noopener noreferrer">compiler explorer</a>，部分代码如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span><span class="lnt">79
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">U</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="k">using</span> <span class="n">_copy_ref_t</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">conditional_t</span><span class="o">&lt;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">std</span><span class="o">::</span><span class="n">is_rvalue_reference_v</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">U</span> <span class="o">&amp;&amp;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">std</span><span class="o">::</span><span class="n">conditional_t</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">is_lvalue_reference_v</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">U</span> <span class="o">&amp;</span><span class="p">,</span> <span class="n">U</span><span class="o">&gt;&gt;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">U</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="k">using</span> <span class="n">_copy_const_t</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">conditional_t</span><span class="o">&lt;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">std</span><span class="o">::</span><span class="n">is_const_v</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">remove_reference_t</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&gt;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">_copy_ref_t</span><span class="o">&lt;</span><span class="n">U</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">remove_reference_t</span><span class="o">&lt;</span><span class="n">U</span><span class="o">&gt;</span> <span class="k">const</span><span class="o">&gt;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">U</span><span class="o">&gt;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">U</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="k">using</span> <span class="n">_copy_cvref_t</span> <span class="o">=</span> <span class="n">_copy_ref_t</span><span class="o">&lt;</span><span class="n">T</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">_copy_const_t</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">U</span><span class="o">&gt;&gt;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="nc">probe</span> <span class="p">{</span> <span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">M</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="nc">S</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">M</span> <span class="n">m</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">using</span> <span class="n">value_type</span> <span class="o">=</span> <span class="n">M</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Tuple</span><span class="p">,</span> <span class="k">typename</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">test</span><span class="p">()</span> <span class="k">noexcept</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">using</span> <span class="n">value_type</span> <span class="o">=</span> <span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">remove_cvref_t</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">value_type</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">using</span> <span class="n">tpl_model</span> <span class="o">=</span>
+</span></span><span class="line"><span class="cl">        <span class="k">decltype</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">get</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">declval</span><span class="o">&lt;</span><span class="n">_copy_cvref_t</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">tuple</span><span class="o">&lt;</span><span class="n">value_type</span><span class="o">&gt;&gt;&gt;</span><span class="p">()));</span>
+</span></span><span class="line"><span class="cl">    <span class="k">using</span> <span class="n">tpl</span> <span class="o">=</span> <span class="k">decltype</span><span class="p">(</span><span class="n">forward_like_tuple</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">value_type</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">declval</span><span class="o">&lt;</span><span class="n">value_type</span><span class="o">&gt;</span><span class="p">()));</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">static_assert</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">is_same_v</span><span class="o">&lt;</span><span class="n">Tuple</span><span class="p">,</span> <span class="n">tpl</span><span class="o">&gt;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// sanity checks
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">static_assert</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">is_same_v</span><span class="o">&lt;</span><span class="n">Tuple</span><span class="p">,</span> <span class="n">tpl_model</span><span class="o">&gt;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">test</span><span class="p">()</span> <span class="k">noexcept</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">using</span> <span class="n">p</span> <span class="o">=</span> <span class="n">probe</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// clang-format off
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">//   TEST TYPE             ,&#39;merge&#39;    ,&#39;tuple&#39;    ,&#39;language&#39;
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span>         <span class="o">&gt;</span>         <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;&amp;</span>      <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;&amp;</span>      <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;&amp;</span>      <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span>         <span class="o">&gt;</span> <span class="o">&amp;</span>       <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span>         <span class="o">&gt;</span> <span class="o">&amp;&amp;</span>      <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;&amp;</span>      <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;&amp;</span>      <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;&amp;</span>      <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span>         <span class="o">&gt;</span> <span class="k">const</span>   <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span>         <span class="o">&gt;</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span>         <span class="o">&gt;</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="k">const</span>   <span class="o">&gt;</span>         <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="k">const</span>   <span class="o">&gt;</span> <span class="o">&amp;</span>       <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="k">const</span>   <span class="o">&gt;</span> <span class="o">&amp;&amp;</span>      <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="k">const</span>   <span class="o">&gt;</span> <span class="k">const</span>   <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="k">const</span>   <span class="o">&gt;</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="k">const</span>   <span class="o">&gt;</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="o">&amp;</span>       <span class="o">&gt;</span> <span class="o">&amp;</span>       <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="o">&amp;&amp;</span>      <span class="o">&gt;</span> <span class="o">&amp;</span>       <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="o">&gt;</span> <span class="o">&amp;</span>       <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;&gt;</span> <span class="o">&amp;</span>       <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="o">&gt;</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;&gt;</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="o">&amp;</span>       <span class="o">&gt;</span>         <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;&amp;</span>      <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="o">&amp;</span>       <span class="o">&gt;</span> <span class="o">&amp;&amp;</span>      <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;&amp;</span>      <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="o">&amp;</span>       <span class="o">&gt;</span> <span class="k">const</span>   <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="o">&amp;</span>       <span class="o">&gt;</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="o">&amp;</span>       <span class="o">&gt;</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="o">&amp;&amp;</span>      <span class="o">&gt;</span>         <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;&amp;</span>      <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;&amp;</span>      <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="o">&amp;&amp;</span>      <span class="o">&gt;</span> <span class="o">&amp;&amp;</span>      <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;&amp;</span>      <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;&amp;</span>      <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="o">&amp;&amp;</span>      <span class="o">&gt;</span> <span class="k">const</span>   <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="o">&amp;&amp;</span>      <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="o">&amp;&amp;</span>      <span class="o">&gt;</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="o">&amp;&amp;</span>      <span class="o">&gt;</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="o">&amp;&amp;</span>      <span class="p">,</span> <span class="n">p</span> <span class="o">&amp;</span>       <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="o">&gt;</span>         <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="o">&gt;</span> <span class="o">&amp;&amp;</span>      <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="o">&gt;</span> <span class="k">const</span>   <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="o">&gt;</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;&gt;</span>         <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;&gt;</span> <span class="o">&amp;&amp;</span>      <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;&gt;</span> <span class="k">const</span>   <span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">test</span><span class="o">&lt;</span><span class="n">S</span><span class="o">&lt;</span><span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;&gt;</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;&amp;</span><span class="p">,</span> <span class="n">p</span> <span class="k">const</span> <span class="o">&amp;</span> <span class="o">&gt;</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// clang-format on
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h2 class="heading-element" id="总结"><span>总结</span>
+  <a href="#%e6%80%bb%e7%bb%93" class="heading-mark">
+    <svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg>
+  </a>
+</h2><p><code>tuple</code>的<code>get</code> 方法在使用<strong>deducing this</strong>和<code>forward_like_tuple</code>之后看上去是简化不少，可从编译器的视角来看，这只是把几个<code>get</code>方法函数重载变成了<code>forward_like_tuple</code>内部的若干个编译期分支，<code>forward_like</code>也是如此，而且对比<code>forward_like</code>和<code>forward_like_tuple</code>的代码实现，二者从结构上也能形成对应。本文只为抛砖，提案 <strong>P2445</strong>有更为详尽的描述。</p>
+</div><div class="post-footer" id="post-footer">
+  <div class="post-info">
+    <div class="post-info-line">
+      <div class="post-info-mod">
+        <span title="更新于 2025-09-05 21:41:02">更新于 2025-09-05&nbsp;</span>
+      </div></div><div class="post-info-line">
+        <div class="post-info-md"><span><a href="/posts/4af8519/index.md" title="阅读原始文档" class="link-to-markdown">阅读原始文档</a></span></div>
+        <div class="post-info-share">
+          <span><a href="javascript:void(0);" title="分享到 X" data-sharer="twitter" data-url="https://typecombinator.github.io/posts/4af8519/" data-title="forward_like_tuple" data-hashtags="blog"><i class="fa-brands fa-x-twitter fa-fw" aria-hidden="true"></i></a>
+  <a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://typecombinator.github.io/posts/4af8519/" data-hashtag="blog"><i class="fa-brands fa-facebook-square fa-fw" aria-hidden="true"></i></a>
+  <a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://typecombinator.github.io/posts/4af8519/" data-title="forward_like_tuple"><i class="fa-brands fa-weibo fa-fw" aria-hidden="true"></i></a>
+  </span>
+        </div>
+      </div></div>
+
+  <div class="post-info-more">
+    <section class="post-tags"><i class="fa-solid fa-tags fa-fw me-1" aria-hidden="true"></i><a href="/tags/blog/" class="post-tag" title="标签 - Blog">Blog</a></section>
+    <section>
+      <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+    </section>
+  </div><div class="post-nav"><a href="/posts/3ff4ce7/" class="post-nav-item" rel="prev" title="简单点，元编程的方式简单点"><i class="fa-solid fa-angle-left fa-fw" aria-hidden="true"></i>简单点，元编程的方式简单点</a></div>
+</div>
+</article>
+
+  <aside class="toc" id="toc-auto" aria-label="目录"><h2 class="toc-title">目录&nbsp;<i class="toc-icon fa-solid fa-angle-down fa-fw" aria-hidden="true"></i></h2>
+      <div class="toc-content" id="toc-content-auto"></div></aside></main><footer class="footer">
+    <div class="footer-container"><div class="footer-line powered">由 <a href="https://gohugo.io/" target="_blank" rel="external nofollow noopener noreferrer" title="Hugo 0.147.5"><img class="hugo-icon" src="/images/hugo.min.svg" alt="Hugo logo" /> Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/hugo-fixit/FixIt" target="_blank" rel="external" title="FixIt v0.3.20"><img class="fixit-icon" src="/images/fixit.min.svg" alt="FixIt logo" /> FixIt</a>
+        </div><div class="footer-line copyright" itemscope itemtype="http://schema.org/CreativeWork"><i class="fa-regular fa-copyright fa-fw" aria-hidden="true"></i>
+            <span itemprop="copyrightYear">2025</span><span class="author" itemprop="copyrightHolder">
+              <a href="https://github.com/TypeCombinator"target="_blank" rel="external nofollow noopener noreferrer">TypeCombinator</a></span></div></div>
+  </footer></div><div class="widgets"><div class="fixed-buttons animate__faster d-none"><div class="fixed-button back-to-top" role="button" aria-label="回到顶部"><i class="fa-solid fa-arrow-up fa-fw" aria-hidden="true"></i><span class="variant-numeric d-none">0%</span>
+        </div></div><div id="mask"></div><noscript>
+    <div class="noscript-warning">该网站在启用 JavaScript 的情况下效果最佳。</div>
+  </noscript>
+</div><link rel="stylesheet" href="/lib/cookieconsent/cookieconsent.min.css"><script src="/lib/sharer/sharer.min.js" async defer></script><script src="/lib/cookieconsent/cookieconsent.min.js" defer></script><script>window.config={"code":{"copyTitle":"复制到剪贴板","editLockTitle":"锁定可编辑代码块","editUnLockTitle":"解锁可编辑代码块","editable":true,"maxShownLines":1000},"comment":{"enable":false},"cookieconsent":{"content":{"dismiss":"同意","link":"了解更多","message":"本网站使用 Cookies 来改善您的浏览体验。"},"enable":true,"palette":{"button":{"background":"#f0f0f0"},"popup":{"background":"#1aa3ff"}},"theme":"edgeless"},"version":"v0.3.20"};</script><script src="/js/theme.min.js" defer></script></body>
+</html>

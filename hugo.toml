@@ -11,6 +11,7 @@ defaultContentLanguage = 'zh-cn'
   _merge = "shallow"
 
 [params]
+  capitalizeTitles = false
   [params.author]
     name = "TypeCombinator"
     email = "typecombinator@foxmail.com"

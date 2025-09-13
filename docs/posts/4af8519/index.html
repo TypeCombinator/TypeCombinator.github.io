@@ -38,7 +38,7 @@
 <meta name="application-name" content="FixIt">
 <meta name="apple-mobile-web-app-title" content="FixIt"><meta name="theme-color" data-light="#f8f8f8" data-dark="#252627" content="#f8f8f8"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="canonical" type="text/html" href="https://typecombinator.github.io/posts/4af8519/" title="forward_like_tuple - TypeCombinator Home" /><link rel="prev" type="text/html" href="https://typecombinator.github.io/posts/3ff4ce7/" title="简单点，元编程的方式简单点" /><link rel="alternate" type="text/markdown" href="https://typecombinator.github.io/posts/4af8519/index.md" title="forward_like_tuple - TypeCombinator Home"><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.removeAttribute('onload');this.rel='stylesheet'">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="canonical" type="text/html" href="https://typecombinator.github.io/posts/4af8519/" title="forward_like_tuple - TypeCombinator Home" /><link rel="prev" type="text/html" href="https://typecombinator.github.io/posts/3ff4ce7/" title="简单点，元编程的方式简单点" /><link rel="next" type="text/html" href="https://typecombinator.github.io/posts/24ef3cf/" title="统一的侵入式链表" /><link rel="alternate" type="text/markdown" href="https://typecombinator.github.io/posts/4af8519/index.md" title="forward_like_tuple - TypeCombinator Home"><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.removeAttribute('onload');this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.removeAttribute('onload');this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
   {
@@ -554,8 +554,7 @@
   <a href="#%e6%80%bb%e7%bb%93" class="heading-mark">
     <svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg>
   </a>
-</h2><p><code>tuple</code>的<code>get</code> 方法在使用<strong>deducing this</strong>和<code>forward_like_tuple</code>之后看上去是简化不少，可从编译器的视角来看，这只是把几个<code>get</code>方法函数重载变成了<code>forward_like_tuple</code>内部的若干个编译期分支，<code>forward_like</code>也是如此，而且对比<code>forward_like</code>和<code>forward_like_tuple</code>的代码实现，二者从结构上也能形成对应。本文只为抛砖，提案 <strong>P2445</strong>有更为详尽的描述。</p>
-</div><div class="post-footer" id="post-footer">
+</h2><p><code>tuple</code>的<code>get</code> 方法在使用<strong>deducing this</strong>和<code>forward_like_tuple</code>之后看上去是简化不少，可从编译器的视角来看，这只是把几个<code>get</code>方法函数重载变成了<code>forward_like_tuple</code>内部的若干个编译期分支，<code>forward_like</code>也是如此，而且对比<code>forward_like</code>和<code>forward_like_tuple</code>的代码实现，二者从结构上也能形成对应。本文只为抛砖，提案 <strong>P2445</strong>有更为详尽的描述。</p></div><div class="post-footer" id="post-footer">
   <div class="post-info">
     <div class="post-info-line">
       <div class="post-info-mod">
@@ -575,7 +574,7 @@
     <section>
       <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
     </section>
-  </div><div class="post-nav"><a href="/posts/3ff4ce7/" class="post-nav-item" rel="prev" title="简单点，元编程的方式简单点"><i class="fa-solid fa-angle-left fa-fw" aria-hidden="true"></i>简单点，元编程的方式简单点</a></div>
+  </div><div class="post-nav"><a href="/posts/3ff4ce7/" class="post-nav-item" rel="prev" title="简单点，元编程的方式简单点"><i class="fa-solid fa-angle-left fa-fw" aria-hidden="true"></i>简单点，元编程的方式简单点</a><a href="/posts/24ef3cf/" class="post-nav-item" rel="next" title="统一的侵入式链表">统一的侵入式链表<i class="fa-solid fa-angle-right fa-fw" aria-hidden="true"></i></a></div>
 </div>
 </article>
 

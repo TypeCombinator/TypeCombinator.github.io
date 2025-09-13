@@ -3,7 +3,7 @@ title: forward_like_tuple
 subtitle:
 date: 2025-09-05T21:41:02+08:00
 slug: 4af8519
-draft: true
+draft: false
 author:
   name: TypeCombinator
   link:
@@ -45,7 +45,7 @@ repost:
 ## 前言
 
 *C++23*语核更新太少，一直没有动力去升级，不过考虑到明年是2026年了，26年用*C++23*还算合理吧？*C++23*中，能大幅简化代码的特性，首当其冲的恐怕就是**deducing this**了，于是先使用该特性对代码进行了一番改造，终于不用再反复写`&`、`const &`、`&&`和`const &&`这几种成员函数了，搭配上`forward_like`，一个成员函数即覆盖所有情形，起初还算顺利，但是改造在`tuple`时却碰到了单元测试编译报错的问题，一探之下，发现`forward_like`并不适用于`tuple`的`get`方法。
-
+<!--more-->
 ## 问题
 
 对于`std::tuple`，`get`函数的实现意图是为了将`tuple`中的成员的访问能力暴露出来，为了简化，这里用`struct`代替讨论，代码如下：

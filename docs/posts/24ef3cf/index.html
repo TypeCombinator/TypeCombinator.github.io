@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html itemscope itemtype="http://schema.org/WebPage" lang="en-us">
+  <head>
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+    <meta name="robots" content="noodp" />
+    <title>统一的侵入式链表 - TypeCombinator Home</title><meta name="author" content="TypeCombinator">
+<meta name="description" content="「完全拒绝UB是缺乏工程实践的表现」 ——TypeCombinator
+前言 去年，我在写下了在purecpp上的第一篇文章——《统一的侵入式链表》，文章里最初的原型是几年前是使用C语言实现的，一直躺在我的私人仓库里吃灰。直到去年我在做调度器优化的相关工作的时候我才回想起来，于是将其拿出来用C&#43;&#43;改写，并做了一些尝试和探索（见GitHub仓库uit），通过这次分享和提问，我得到了ykiko迅速且精准的回答，也意识到了这个idea和C&#43;&#43;标准之间的矛盾，遂弃坑了一段时间，但是，终极问题的种子一直深埋脑海——如何让这个idea能够work呢？
+在后续的日常开发中，我又有了新的思路，实践之后，先前无法通过的测试均能在三大编译器上通过，当然其中过程也并非一帆风顺，哄了Clang和GCC好几小时，这两位才让我构造的测试通过，至于MSVC嘛，向来情绪稳定，毫无意外地通过了测试。需要说明的是新方案不仅在用法上更灵活，也没有引入任何额外分支或其他消耗，且不需要加任何额外的编译选项或是在源码中加一些属性，在最高优化等级下，三大编译器均可通过所有测试！
+"><meta name="keywords" content='blog'>
+  <meta itemprop="name" content="统一的侵入式链表">
+  <meta itemprop="description" content="「完全拒绝UB是缺乏工程实践的表现」 ——TypeCombinator
+前言 去年，我在写下了在purecpp上的第一篇文章——《统一的侵入式链表》，文章里最初的原型是几年前是使用C语言实现的，一直躺在我的私人仓库里吃灰。直到去年我在做调度器优化的相关工作的时候我才回想起来，于是将其拿出来用C&#43;&#43;改写，并做了一些尝试和探索（见GitHub仓库uit），通过这次分享和提问，我得到了ykiko迅速且精准的回答，也意识到了这个idea和C&#43;&#43;标准之间的矛盾，遂弃坑了一段时间，但是，终极问题的种子一直深埋脑海——如何让这个idea能够work呢？
+在后续的日常开发中，我又有了新的思路，实践之后，先前无法通过的测试均能在三大编译器上通过，当然其中过程也并非一帆风顺，哄了Clang和GCC好几小时，这两位才让我构造的测试通过，至于MSVC嘛，向来情绪稳定，毫无意外地通过了测试。需要说明的是新方案不仅在用法上更灵活，也没有引入任何额外分支或其他消耗，且不需要加任何额外的编译选项或是在源码中加一些属性，在最高优化等级下，三大编译器均可通过所有测试！">
+  <meta itemprop="datePublished" content="2025-09-13T23:28:11+08:00">
+  <meta itemprop="dateModified" content="2025-09-13T23:28:11+08:00">
+  <meta itemprop="wordCount" content="336">
+  <meta itemprop="keywords" content="Blog"><meta property="og:url" content="https://typecombinator.github.io/posts/24ef3cf/">
+  <meta property="og:site_name" content="TypeCombinator Home">
+  <meta property="og:title" content="统一的侵入式链表">
+  <meta property="og:description" content="「完全拒绝UB是缺乏工程实践的表现」 ——TypeCombinator
+前言 去年，我在写下了在purecpp上的第一篇文章——《统一的侵入式链表》，文章里最初的原型是几年前是使用C语言实现的，一直躺在我的私人仓库里吃灰。直到去年我在做调度器优化的相关工作的时候我才回想起来，于是将其拿出来用C&#43;&#43;改写，并做了一些尝试和探索（见GitHub仓库uit），通过这次分享和提问，我得到了ykiko迅速且精准的回答，也意识到了这个idea和C&#43;&#43;标准之间的矛盾，遂弃坑了一段时间，但是，终极问题的种子一直深埋脑海——如何让这个idea能够work呢？
+在后续的日常开发中，我又有了新的思路，实践之后，先前无法通过的测试均能在三大编译器上通过，当然其中过程也并非一帆风顺，哄了Clang和GCC好几小时，这两位才让我构造的测试通过，至于MSVC嘛，向来情绪稳定，毫无意外地通过了测试。需要说明的是新方案不仅在用法上更灵活，也没有引入任何额外分支或其他消耗，且不需要加任何额外的编译选项或是在源码中加一些属性，在最高优化等级下，三大编译器均可通过所有测试！">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-09-13T23:28:11+08:00">
+    <meta property="article:modified_time" content="2025-09-13T23:28:11+08:00">
+    <meta property="article:tag" content="Blog">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="统一的侵入式链表">
+  <meta name="twitter:description" content="「完全拒绝UB是缺乏工程实践的表现」 ——TypeCombinator
+前言 去年，我在写下了在purecpp上的第一篇文章——《统一的侵入式链表》，文章里最初的原型是几年前是使用C语言实现的，一直躺在我的私人仓库里吃灰。直到去年我在做调度器优化的相关工作的时候我才回想起来，于是将其拿出来用C&#43;&#43;改写，并做了一些尝试和探索（见GitHub仓库uit），通过这次分享和提问，我得到了ykiko迅速且精准的回答，也意识到了这个idea和C&#43;&#43;标准之间的矛盾，遂弃坑了一段时间，但是，终极问题的种子一直深埋脑海——如何让这个idea能够work呢？
+在后续的日常开发中，我又有了新的思路，实践之后，先前无法通过的测试均能在三大编译器上通过，当然其中过程也并非一帆风顺，哄了Clang和GCC好几小时，这两位才让我构造的测试通过，至于MSVC嘛，向来情绪稳定，毫无意外地通过了测试。需要说明的是新方案不仅在用法上更灵活，也没有引入任何额外分支或其他消耗，且不需要加任何额外的编译选项或是在源码中加一些属性，在最高优化等级下，三大编译器均可通过所有测试！">
+<meta name="application-name" content="FixIt">
+<meta name="apple-mobile-web-app-title" content="FixIt"><meta name="theme-color" data-light="#f8f8f8" data-dark="#252627" content="#f8f8f8"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="canonical" type="text/html" href="https://typecombinator.github.io/posts/24ef3cf/" title="统一的侵入式链表 - TypeCombinator Home" /><link rel="prev" type="text/html" href="https://typecombinator.github.io/posts/4af8519/" title="forward_like_tuple" /><link rel="alternate" type="text/markdown" href="https://typecombinator.github.io/posts/24ef3cf/index.md" title="统一的侵入式链表 - TypeCombinator Home"><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.removeAttribute('onload');this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.removeAttribute('onload');this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+  {
+    "@context": "http://schema.org",
+    "@type": "BlogPosting",
+    "headline": "统一的侵入式链表",
+    "inLanguage": "en-us",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https:\/\/typecombinator.github.io\/posts\/24ef3cf\/"
+    },"genre": "posts","keywords": "blog","wordcount":  336 ,
+    "url": "https:\/\/typecombinator.github.io\/posts\/24ef3cf\/","datePublished": "2025-09-13T23:28:11+08:00","dateModified": "2025-09-13T23:28:11+08:00","publisher": {
+      "@type": "Organization",
+      "name": ""},"author": {
+        "@type": "Person",
+        "name": "TypeCombinator"
+      },"description": ""
+  }
+  </script><script src="/js/head/color-scheme.min.js"></script></head>
+  <body data-header-desktop="sticky" data-header-mobile="auto"><div class="wrapper" data-page-style="normal"><header class="desktop animate__faster" id="header-desktop">
+  <div class="header-wrapper">
+    <div class="header-title">
+      <a href="/" title="TypeCombinator Home"><span class="header-title-text">TypeCombinator Home</span></a><span class="header-subtitle"></span></div>
+    <nav>
+      <ul class="menu"><li class="menu-item">
+              <a class="menu-link" href="/archives/"><i class="fa-solid fa-archive fa-fw fa-sm" aria-hidden="true"></i> Archives</a></li><li class="menu-item">
+              <a class="menu-link" href="/categories/"><i class="fa-solid fa-folder-tree fa-fw fa-sm" aria-hidden="true"></i> Categories</a></li><li class="menu-item">
+              <a class="menu-link" href="/tags/"><i class="fa-solid fa-tags fa-fw fa-sm" aria-hidden="true"></i> Tags</a></li><li class="menu-item delimiter"></li><li class="menu-item theme-switch" title="切换主题">
+          <i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i>
+        </li></ul>
+    </nav>
+  </div>
+</header><header class="mobile animate__faster" id="header-mobile">
+  <div class="header-container">
+    <div class="header-wrapper">
+      <div class="header-title">
+        <a href="/" title="TypeCombinator Home"><span class="header-title-text">TypeCombinator Home</span></a><span class="header-subtitle"></span></div>
+      <div class="menu-toggle" id="menu-toggle-mobile">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+    <nav>
+      <ul class="menu" id="menu-mobile"><li class="menu-item"><a class="menu-link" href="/archives/"><i class="fa-solid fa-archive fa-fw fa-sm" aria-hidden="true"></i> Archives</a></li><li class="menu-item"><a class="menu-link" href="/categories/"><i class="fa-solid fa-folder-tree fa-fw fa-sm" aria-hidden="true"></i> Categories</a></li><li class="menu-item"><a class="menu-link" href="/tags/"><i class="fa-solid fa-tags fa-fw fa-sm" aria-hidden="true"></i> Tags</a></li><li class="menu-item menu-system">
+          <span class="menu-system-item theme-switch" title="切换主题"><i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i></span></li>
+      </ul>
+    </nav>
+  </div>
+</header><main class="container"><aside class="aside-collection animate__animated animate__fadeIn animate__faster" aria-label="合集"></aside>
+
+  <article class="page single">
+    <div class="header"><h1 class="single-title animate__animated animate__flipInX"><span title="转载" class="icon-repost"><i class="fa-solid fa-share fa-fw" aria-hidden="true"></i></span><span>统一的侵入式链表</span>
+      </h1></div><div class="post-meta">
+      <div class="post-meta-line"><span class="post-author"><a href="https://github.com/TypeCombinator" title="作者"target="_blank" rel="external nofollow noopener noreferrer author" class="author"><img class="avatar" src='https://github.com/TypeCombinator.png' alt="TypeCombinator" height="16" width="16">&nbsp;TypeCombinator</a></span><span class="post-included-in">&nbsp;收录于 <a href="/categories/c++/" class="post-category" title="分类 - C++"><i class="fa-regular fa-folder fa-fw" aria-hidden="true"></i> C++</a></span></div><div class="post-meta-line"><span title="发布于 2025-09-13 23:28:11"><i class="fa-solid fa-calendar-days fa-fw me-1" aria-hidden="true"></i><time datetime="2025-09-13">2025-09-13</time></span>&nbsp;<span title="336 字"><i class="fa-solid fa-pencil-alt fa-fw me-1" aria-hidden="true"></i>约 400 字</span>&nbsp;<span><i class="fa-regular fa-clock fa-fw me-1" aria-hidden="true"></i>预计阅读 2 分钟</span>&nbsp;</div>
+    </div><div class="details toc" id="toc-static" data-kept="false">
+        <div class="details-summary toc-title">
+          <span>目录</span>
+          <span><i class="details-icon fa-solid fa-angle-right" aria-hidden="true"></i></span>
+        </div>
+        <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#前言">前言</a></li>
+    <li><a href="#回顾">回顾</a></li>
+    <li><a href="#总结">总结</a></li>
+  </ul>
+</nav></div>
+      </div><div class="content" id="content"><p><strong>「完全拒绝UB是缺乏工程实践的表现」</strong> ——<em>TypeCombinator</em></p>
+<h2 class="heading-element" id="前言"><span>前言</span>
+  <a href="#%e5%89%8d%e8%a8%80" class="heading-mark">
+    <svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg>
+  </a>
+</h2><p>去年，我在写下了在purecpp上的第一篇文章——<a href="http://purecpp.cn/detail?id=2445"target="_blank" rel="external nofollow noopener noreferrer">《统一的侵入式链表》</a>，文章里最初的原型是几年前是使用C语言实现的，一直躺在我的私人仓库里吃灰。直到去年我在做调度器优化的相关工作的时候我才回想起来，于是将其拿出来用C++改写，并做了一些尝试和探索（见GitHub仓库<a href="https://github.com/TypeCombinator/uit"target="_blank" rel="external nofollow noopener noreferrer"><strong>uit</strong></a>），通过这次分享和提问，我得到了ykiko迅速且精准的回答，也意识到了这个idea和C++标准之间的矛盾，遂弃坑了一段时间，但是，终极问题的种子一直深埋脑海——<strong>如何让这个idea能够work呢</strong>？</p>
+<p>在后续的日常开发中，我又有了新的思路，实践之后，先前无法通过的测试均能在三大编译器上通过，当然其中过程也并非一帆风顺，哄了<strong>Clang</strong>和<strong>GCC</strong>好几小时，这两位才让我构造的测试通过，至于<strong>MSVC</strong>嘛，向来情绪稳定，毫无意外地通过了测试。<strong>需要说明的是</strong>新方案不仅在用法上更灵活，也没有引入任何额外分支或其他消耗，且不需要加任何额外的编译选项或是在源码中加一些属性，在最高优化等级下，三大编译器均可通过所有测试！</p>
+<p>不过，新方案的代码暂时没有公开，原因之一是它仍不完美，总体上，UB只是减少了，而不是完全消失，未来随着测试项新增或编译器更新仍有可能出现测试不通过的情况。不得不说，对于新的方案，我还是<strong>很有信心</strong>的，即使真的出现问题，我想我还是有能力修复的。</p>
+<p>GitHub没法在公开的仓库上建立私有分支，新方案的代码最初躺在专门用于做各种实验的私人仓库中，但这个仓库不方便公开，在知乎上更新<a href="https://www.zhihu.com/question/1247137402/answer/11745522389"target="_blank" rel="external nofollow noopener noreferrer"><strong>自答</strong></a>时，我建了一个私人仓库<a href="https://github.com/TypeCombinator/uit_ng"target="_blank" rel="external nofollow noopener noreferrer"><strong>uit_ng</strong></a>，待到时机合适再公开吧，如果有足够的人感兴趣话，这也是我的考量之一。</p>
+<h2 class="heading-element" id="回顾"><span>回顾</span>
+  <a href="#%e5%9b%9e%e9%a1%be" class="heading-mark">
+    <svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg>
+  </a>
+</h2><p>统一的侵入式链表使用了一种名为<strong>mock_head</strong>的技巧，通过该技巧可以将4中不同的链表统一起来，不过随着后来我在仓库中加入的侵入式平衡二叉树——SBT和WBT，现在，我有点后悔取<strong>mock_head</strong>这个名了，改名为<strong>mock_sentinel</strong>会契合得多！不过这不是重点，purecpp上的<a href="http://purecpp.cn/detail?id=2445"target="_blank" rel="external nofollow noopener noreferrer">文章</a>由于没放图片，可能不易于理解，这里再结合图片重新介绍一下。</p>
+<p>先用一句话解释<strong>mock_head</strong>，即<em>复用头节点空间去模拟哨兵节点，统一头节点和数据节点的访问</em>。为说明这一技巧，我将以最容易的单链表开始，示意图如下：</p>
+<p><img loading="lazy" src='/blog/uit/slist.png' alt="/blog/uit/slist.png"></p>
+<p>如上图所示，<strong>head</strong>减去数据节点中<code>right</code>字段的偏移即可得到<strong>mock_head</strong>，这样<strong>mock_head</strong>与数据节点能以相同的方式访问<code>right</code>字段，我们获得了统一访问的能力！毫无疑问，这种操作是UB，且会引入多种违反，但是我想说的是<strong>完全拒绝UB是缺乏工程实践的表现</strong>，为了极致性能必须要有所权衡，没有一种模型能够应对所有情形，C/C++的<em>某些</em>极致性能其实是用UB换来的！</p>
+<p>字段减偏移的操作不就是linux内核源码中赫赫有名的<code>container_of</code>吗？没错！不同的是linux内核源码是将<code>container_of</code>作用于数据节点，而本文提到的<strong>mock_head</strong>则是将<code>container_of</code>作用于头节点，为了简化讨论，我将用C语言单链表来描述，代码（完整的放在<a href="https://godbolt.org/z/c66dj6YE7"target="_blank" rel="external nofollow noopener noreferrer">compiler explorer</a>上）如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stdint.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stddef.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span><span class="k">struct</span> <span class="n">node</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">sn</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">node</span> <span class="o">*</span><span class="n">next</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl"><span class="k">static</span> <span class="k">struct</span> <span class="n">node</span> <span class="o">*</span><span class="n">head</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">push_front</span><span class="p">(</span><span class="k">struct</span> <span class="n">node</span> <span class="o">*</span><span class="n">n</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">n</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="n">head</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">head</span> <span class="o">=</span> <span class="n">n</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="cp">#define container_of(_field_, _type_, _member_)   
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>    <span class="p">((</span><span class="n">_type_</span> <span class="o">*</span><span class="p">)</span> <span class="p">((</span><span class="kt">size_t</span><span class="p">)</span> <span class="p">(</span><span class="n">_field_</span><span class="p">)</span> <span class="o">-</span><span class="nf">offsetof</span><span class="p">(</span><span class="n">_type_</span><span class="p">,</span> <span class="n">_member_</span><span class="p">)))</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="cp">#define MOCK_HEAD(_field_, _type_, _member_) container_of(_field_, _type_, _member_)
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="n">node</span> <span class="o">*</span><span class="nf">remove_with_mock_head</span><span class="p">(</span><span class="k">struct</span> <span class="n">node</span> <span class="o">*</span><span class="n">n</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">node</span> <span class="o">*</span><span class="n">prev</span> <span class="o">=</span> <span class="nf">MOCK_HEAD</span><span class="p">(</span><span class="o">&amp;</span><span class="n">head</span><span class="p">,</span> <span class="k">struct</span> <span class="n">node</span><span class="p">,</span> <span class="n">next</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="p">(</span><span class="k">struct</span> <span class="n">node</span> <span class="o">*</span><span class="n">cur</span> <span class="o">=</span> <span class="n">prev</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span> <span class="n">cur</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">;)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">cur</span> <span class="o">==</span> <span class="n">n</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="n">prev</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="n">cur</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="k">return</span> <span class="n">cur</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">        <span class="n">prev</span> <span class="o">=</span> <span class="n">cur</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">cur</span> <span class="o">=</span> <span class="n">prev</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>以上代码可以看出，<strong>mock_head</strong>能直接使用<code>container_of</code>实现，以上节点删除代码与linux内核源码中使用二级指针删除节点的代码在形式上是一致的，这里再列出使用二级指针删除节点的代码作为对比，帮助理解，代码如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">struct</span> <span class="n">node</span> <span class="o">*</span><span class="nf">remove_with_in_linux</span><span class="p">(</span><span class="k">struct</span> <span class="n">node</span> <span class="o">*</span><span class="n">n</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">node</span> <span class="o">**</span><span class="n">prev</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">head</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="p">(</span><span class="k">struct</span> <span class="n">node</span> <span class="o">*</span><span class="n">cur</span> <span class="o">=</span> <span class="o">*</span><span class="n">prev</span><span class="p">;</span> <span class="n">cur</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">;)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">cur</span> <span class="o">==</span> <span class="n">n</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="o">*</span><span class="n">prev</span> <span class="o">=</span> <span class="n">cur</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="k">return</span> <span class="n">cur</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">        <span class="n">prev</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">cur</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">cur</span> <span class="o">=</span> <span class="o">*</span><span class="n">prev</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>可以看到，使用二级指针也能将头和数据节点的访问统一起来，对于单链表，使用<strong>mock_head</strong>相对于二级指针没有代码复杂度和性能上的优势，但是，如果将<strong>mock_head</strong>应用到其他形式的链表，并将语言切换到C++呢？像<a href="https://github.com/NVIDIA/stdexec"target="_blank" rel="external nofollow noopener noreferrer"><strong>stdexec</strong></a>的这种方式实现<a href="https://github.com/NVIDIA/stdexec/blob/main/include/stdexec/__detail/__intrusive_queue.hpp"target="_blank" rel="external nofollow noopener noreferrer">intrusive_queue</a>由于头节点和数据节点访问不统一，需要对边界情形做额外判断，摘取其<code>push_back</code>代码如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">push_back</span><span class="p">(</span><span class="n">_Item</span><span class="o">*</span> <span class="n">__item</span><span class="p">)</span> <span class="k">noexcept</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">STDEXEC_ASSERT</span><span class="p">(</span><span class="n">__item</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">__item</span><span class="o">-&gt;*</span><span class="n">_Next</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">__tail_</span> <span class="o">==</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">__head_</span> <span class="o">=</span> <span class="n">__item</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">__tail_</span><span class="o">-&gt;*</span><span class="n">_Next</span> <span class="o">=</span> <span class="n">__item</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="n">__tail_</span> <span class="o">=</span> <span class="n">__item</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>如果以上代码改用<strong>mock_head</strong>实现呢？摘取与之等价的<a href="https://github.com/TypeCombinator/uit"target="_blank" rel="external nofollow noopener noreferrer"><strong>uit</strong></a>的<a href="https://github.com/TypeCombinator/uit/blob/main/include/uit/idslist.hpp"target="_blank" rel="external nofollow noopener noreferrer">idslist</a>的<code>push_back</code>实现如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">push_back</span><span class="p">(</span><span class="n">T</span> <span class="o">*</span><span class="n">node</span><span class="p">)</span> <span class="k">noexcept</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="n">node</span><span class="o">-&gt;*</span><span class="n">M</span><span class="p">).</span><span class="n">right</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="n">head</span><span class="p">.</span><span class="n">left</span><span class="o">-&gt;*</span><span class="n">M</span><span class="p">).</span><span class="n">right</span> <span class="o">=</span> <span class="n">node</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">head</span><span class="p">.</span><span class="n">left</span> <span class="o">=</span> <span class="n">node</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>可以看到，使用<strong>mock_head</strong>之后，以上代码没有任何分支！为什么可以这样呢？核心原因在于链表为空的处理不一样，示意图如下：</p>
+<p><img loading="lazy" src='/blog/uit/dslist_empty.png' alt="/blog/uit/dslist_empty.png"></p>
+<p>链表为空时，<code>left</code>并没有指向空，而是指向了<strong>mock_head</strong>，这样，在链表为空时也能通过<code>left</code>字段去访问到<code>right</code>字段，所以，空和非空<code>idslist</code>的<code>push_back</code>处理被统一了，对于非空的<code>idslist</code>示意图如下：</p>
+<p><img loading="lazy" src='/blog/uit/dslist.png' alt="/blog/uit/dslist.png"></p>
+<p>需要说明的是<a href="https://github.com/NVIDIA/stdexec"target="_blank" rel="external nofollow noopener noreferrer"><strong>stdexec</strong></a>的<a href="https://github.com/NVIDIA/stdexec/blob/main/include/stdexec/__detail/__intrusive_queue.hpp"target="_blank" rel="external nofollow noopener noreferrer">intrusive_queue</a>的<code>pop_front</code>方法调用是需要在外部判空的，而<a href="https://github.com/TypeCombinator/uit"target="_blank" rel="external nofollow noopener noreferrer"><strong>uit</strong></a>的是在内部判空的，这里<strong>不要混淆</strong>！ <code>idlist</code>（双链表）也采用了类似的技巧，示意图如下：</p>
+<p><img loading="lazy" src='/blog/uit/dlist_empty.png' alt="/blog/uit/dlist_empty.png"></p>
+<p><img loading="lazy" src='/blog/uit/dlist.png' alt="/blog/uit/dlist.png"></p>
+<p>链表为空时，<code>right</code>和<code>left</code>都指向了<strong>mock_head</strong>，通过这种技巧，<code>idlist</code>能获得和linux内核链表形式相同的处理代码，比如<code>insert</code>和<code>remove</code>方法，代码实现如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">void</span> <span class="nf">insert</span><span class="p">(</span><span class="n">T</span> <span class="o">*</span><span class="n">node</span><span class="p">,</span> <span class="n">T</span> <span class="o">*</span><span class="n">left</span><span class="p">,</span> <span class="n">T</span> <span class="o">*</span><span class="n">right</span><span class="p">)</span> <span class="k">noexcept</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="n">node</span><span class="o">-&gt;*</span><span class="n">M</span><span class="p">).</span><span class="n">right</span> <span class="o">=</span> <span class="n">right</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="n">node</span><span class="o">-&gt;*</span><span class="n">M</span><span class="p">).</span><span class="n">left</span> <span class="o">=</span> <span class="n">left</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="n">left</span><span class="o">-&gt;*</span><span class="n">M</span><span class="p">).</span><span class="n">right</span> <span class="o">=</span> <span class="n">node</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="n">right</span><span class="o">-&gt;*</span><span class="n">M</span><span class="p">).</span><span class="n">left</span> <span class="o">=</span> <span class="n">node</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">void</span> <span class="nf">remove</span><span class="p">(</span><span class="n">T</span> <span class="o">*</span><span class="n">left</span><span class="p">,</span> <span class="n">T</span> <span class="o">*</span><span class="n">right</span><span class="p">)</span> <span class="k">noexcept</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="n">left</span><span class="o">-&gt;*</span><span class="n">M</span><span class="p">).</span><span class="n">right</span> <span class="o">=</span> <span class="n">right</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="n">right</span><span class="o">-&gt;*</span><span class="n">M</span><span class="p">).</span><span class="n">left</span> <span class="o">=</span> <span class="n">left</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>同样的，不需要使用任何分支！更为关键的是，由于这些维护链接关系的指针是直接指向节点的，用户不再需要像linux内核链表那样用<code>container_of</code>去还原数据节点，这消除了对用户代码的侵入！</p>
+<p>C++侵入式链表的各种实现已经很多了，广为人知的boost的<a href="https://github.com/boostorg/intrusive"target="_blank" rel="external nofollow noopener noreferrer"><strong>intrusive</strong></a>不必多说，<a href="https://github.com/nodejs/node"target="_blank" rel="external nofollow noopener noreferrer"><strong>nodejs</strong></a>也用到了侵入式链表，位于<a href="https://github.com/nodejs/node/blob/main/src/util.h"target="_blank" rel="external nofollow noopener noreferrer">src/util.h</a>文件中，不过里面只实现了一个双链表，其实现思路与linux的内核链表是一致的，所以也使用了会在C++中引入UB的<code>container_of</code>。那么，要在C++中实现linux那种形式的侵入式链表，用继承和<code>static_cast</code>代替<code>container_of</code>是否可行呢？当然可行！但问题是，<strong>继承真的很不好用</strong>！虽然C++的很多技法都和继承绑定了，但实践开发中，我的看法是能不用继承就不要用！如果抛弃以上方案，改用stdexec的方式实现呢？虽然不会引入UB，但实现起来需要做额外的边界条件判断，这必然引入额外开销！</p>
+<p>最后，还剩下一个<code>isdlist</code>没有介绍，这等价于linux中的<code>hlist</code>，该链表主要用于实现哈希表，当持有节点需要删除时，如果使用单链表，则需要遍历拿到前驱才能删除，但如果改用双链表，则头节点需要两个指针的空间，而使用<code>isdlist</code>则只需要占用一个指针的空间，<code>isdlist</code>     的示意图如下：</p>
+<p><img loading="lazy" src='/blog/uit/sdlist.png' alt="/blog/uit/sdlist.png"></p>
+<p>linux中的<code>hlist</code>的数据节点的前驱是一个二级指针，指向的是前驱的后继指针，特殊的首数据节点，则其前驱指针则指向了链表的头节点；<code>isdlist</code>由于使用了 <strong>mock_head</strong>，二级指针不再被需要，前驱指针直接指向前驱节点，特殊的首数据节点，则其前驱指针指向了<strong>mock_head</strong>。</p>
+<p>至此，4种侵入式链表(<code>islist</code>，<code>idslist</code>，<code>idlist</code>和<code>isdlist</code>)已回顾完毕！其<strong>优缺点</strong>总结如下：</p>
+<ul>
+<li>
+<p><strong>优点</strong></p>
+<ul>
+<li>简单易懂的代码</li>
+<li>更少的分支和更好的性能，比如，<code>idslit</code>的<code>push_back</code>方法没有任何分支</li>
+<li>二级指针不再被需要，<code>isdlist</code>也不例外</li>
+<li>真正的零成本抽象</li>
+<li>没有使用宏</li>
+</ul>
+</li>
+<li>
+<p><strong>缺点</strong></p>
+<ul>
+<li>会引入UB，且有多种违反</li>
+<li><code>isdlist</code>，<code>idslist</code>和 <code>idlist</code>是自引用类型， <code>isdlist</code>和 <code>idlist</code> 是move-only的（这不是大问题，可以用额外的模板参数控制是否启用<strong>mock_head</strong>，以避免自引用和move-only带来的不便）</li>
+</ul>
+</li>
+</ul>
+<h2 class="heading-element" id="总结"><span>总结</span>
+  <a href="#%e6%80%bb%e7%bb%93" class="heading-mark">
+    <svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg>
+  </a>
+</h2><p>当前公开的仓库<a href="https://github.com/TypeCombinator/uit"target="_blank" rel="external nofollow noopener noreferrer"><strong>uit</strong></a>只是一个展示<strong>mock_head</strong>这一技巧的实验代码，非<code>-O0</code>优化等级下，单元测试不能完全通过，不具备实用条件，而可实用的仓库<a href="https://github.com/TypeCombinator/uit_ng"target="_blank" rel="external nofollow noopener noreferrer"><strong>uit_ng</strong></a>现在还没有公开，虽然暂时未公开，但是传达出<strong>mock_head</strong>是可以行得通的技巧这一信息，我想在现阶段已经足够！</p>
+<p>使用<strong>mock_head</strong>是可以带来性能提升的，虽然不多，且会引入UB，但<strong>权衡</strong>之下，我认为这是值得的，毕竟，有得必有失！从我研读过的诸多C++开源项目来看，追求性能而有意引入UB项目也并不少，正如我前面所说，<strong>完全拒绝UB是缺乏工程实践的表现</strong>，C++的模型是有边界，有极限的，总有一些情形是照顾不到的，部分情形可能随着C++语言版本更新被所纳入的新特性所覆盖，但有些情形则是永远不会被C++标准委员会所采纳的，对于这种情况，如果收益值得，只要有足够的测试覆盖，是不需要有过多担心的。</p>
+<p>前段时间，我还尝试过使用Zig语言上使用<strong>mock_head</strong>的原始方案，经过实践，Zig语言也表现出只能在Debug模式下通过测试，<strong>其他模式则测试失败</strong>的现象，Zig语言看起来没有C++的生命周期和严格别名的这样的限制，但是对于是否有对象的边界检查以及指针的其他限制，我不是太清楚，毕竟我只学了一天！从结果来看，也是违反了Zig语言的某些规则，有人推测是因为Release模式使用了LLVM后端的缘故，当前Zig开发的后端只用在了Debug模式，等Zig彻底去除了LLVM后端再测试吧！不过，LLVM后端累积那么多年的PASS，支持那么多平台，想要替代，也许得等到<strong>猴年马月</strong>了！</p>
+<p>当前，C++已经能实现并满足我的一切所想，虽然特性复杂，偶尔让人在一些细节上耗费时间和精力，但每次都是能带来收获的，这也是<strong>C++的魅力</strong>所在，我再也无需纠结C++侵入式链表的性能问题了！</p></div><div class="post-footer" id="post-footer">
+  <div class="post-info">
+    <div class="post-info-line">
+      <div class="post-info-mod">
+        <span title="更新于 2025-09-13 23:28:11">更新于 2025-09-13&nbsp;</span>
+      </div></div><div class="post-info-line">
+        <div class="post-info-md"><span><a href="/posts/24ef3cf/index.md" title="阅读原始文档" class="link-to-markdown">阅读原始文档</a></span></div>
+        <div class="post-info-share">
+          <span><a href="javascript:void(0);" title="分享到 X" data-sharer="twitter" data-url="https://typecombinator.github.io/posts/24ef3cf/" data-title="统一的侵入式链表" data-hashtags="blog"><i class="fa-brands fa-x-twitter fa-fw" aria-hidden="true"></i></a>
+  <a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://typecombinator.github.io/posts/24ef3cf/" data-hashtag="blog"><i class="fa-brands fa-facebook-square fa-fw" aria-hidden="true"></i></a>
+  <a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://typecombinator.github.io/posts/24ef3cf/" data-title="统一的侵入式链表"><i class="fa-brands fa-weibo fa-fw" aria-hidden="true"></i></a>
+  </span>
+        </div>
+      </div></div>
+
+  <div class="post-info-more">
+    <section class="post-tags"><i class="fa-solid fa-tags fa-fw me-1" aria-hidden="true"></i><a href="/tags/blog/" class="post-tag" title="标签 - Blog">Blog</a></section>
+    <section>
+      <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+    </section>
+  </div><div class="post-nav"><a href="/posts/4af8519/" class="post-nav-item" rel="prev" title="forward_like_tuple"><i class="fa-solid fa-angle-left fa-fw" aria-hidden="true"></i>forward_like_tuple</a></div>
+</div>
+</article>
+
+  <aside class="toc" id="toc-auto" aria-label="目录"><h2 class="toc-title">目录&nbsp;<i class="toc-icon fa-solid fa-angle-down fa-fw" aria-hidden="true"></i></h2>
+      <div class="toc-content" id="toc-content-auto"></div></aside></main><footer class="footer">
+    <div class="footer-container"><div class="footer-line powered">由 <a href="https://gohugo.io/" target="_blank" rel="external nofollow noopener noreferrer" title="Hugo 0.147.5"><img class="hugo-icon" src="/images/hugo.min.svg" alt="Hugo logo" /> Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/hugo-fixit/FixIt" target="_blank" rel="external" title="FixIt v0.3.20"><img class="fixit-icon" src="/images/fixit.min.svg" alt="FixIt logo" /> FixIt</a>
+        </div><div class="footer-line copyright" itemscope itemtype="http://schema.org/CreativeWork"><i class="fa-regular fa-copyright fa-fw" aria-hidden="true"></i>
+            <span itemprop="copyrightYear">2025</span><span class="author" itemprop="copyrightHolder">
+              <a href="https://github.com/TypeCombinator"target="_blank" rel="external nofollow noopener noreferrer">TypeCombinator</a></span></div></div>
+  </footer></div><div class="widgets"><div class="fixed-buttons animate__faster d-none"><div class="fixed-button back-to-top" role="button" aria-label="回到顶部"><i class="fa-solid fa-arrow-up fa-fw" aria-hidden="true"></i><span class="variant-numeric d-none">0%</span>
+        </div></div><div id="mask"></div><noscript>
+    <div class="noscript-warning">该网站在启用 JavaScript 的情况下效果最佳。</div>
+  </noscript>
+</div><link rel="stylesheet" href="/lib/cookieconsent/cookieconsent.min.css"><script src="/lib/sharer/sharer.min.js" async defer></script><script src="/lib/cookieconsent/cookieconsent.min.js" defer></script><script>window.config={"code":{"copyTitle":"复制到剪贴板","editLockTitle":"锁定可编辑代码块","editUnLockTitle":"解锁可编辑代码块","editable":true,"maxShownLines":1000},"comment":{"enable":false},"cookieconsent":{"content":{"dismiss":"同意","link":"了解更多","message":"本网站使用 Cookies 来改善您的浏览体验。"},"enable":true,"palette":{"button":{"background":"#f0f0f0"},"popup":{"background":"#1aa3ff"}},"theme":"edgeless"},"version":"v0.3.20"};</script><script src="/js/theme.min.js" defer></script></body>
+</html>

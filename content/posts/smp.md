@@ -61,7 +61,7 @@ static_assert(
   typeid(example<double, void, const short, int>::v)
 );
 ```
-
+<!--more-->
 这不就是我的梦中情码么？类型计算和值计算完全一致！好奇心驱使下看了下代码实现，还是有点小小的失望，作者使用了有状态模板元编程，写到这里感觉要开始部分劝退了，不过在C++20的concept加持下，有状态模板元编程也得到了大幅简化，既然是有状态，那么就需要对状态进行读写：
 
 - 写：例化友元函数
@@ -168,4 +168,3 @@ static constexpr auto gen() -> size_t {
     }
 }
 ```
-<!--more-->

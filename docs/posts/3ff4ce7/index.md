@@ -110,7 +110,7 @@ static constexpr auto gen() -> size_t {
 
 ## 总结
 
-上面提到的库是[**mp**](https://github.com/qlibs/mp)，库作者是**Kris Jusiak**，cppcon上的常客了，在cppcon2024上，作者对该库做了讲解，讲解的最后，作者给出了编译时间性能测试，这也是让我印象深刻的地方。当然，考虑到有状态元编程的种种问题，该库的学习意义可能大于实践意义，将其作为**P2996**开胃菜也是一个不错的选择。该作者还有其他很多有意思的库，作者已将这些库合而为一，即[**qlibs**](https://github.com/qlibs/qlibs)。
+上面提到的库是[**mp**](https://github.com/qlibs/mp)，库作者是**Kris Jusiak**，cppcon上的常客了，在cppcon2024上，作者对该库做了讲解，讲解的最后，作者给出了编译时间性能测试，这也是让我印象深刻的地方。当然，考虑到有状态元编程的种种问题，该库的学习意义可能大于实践意义，将其作为**P2996**开胃菜也是一个不错的选择。该作者还有其他很多有意思的库，见[**qlibs**](https://github.com/qlibs)。
 
 本文中出现的测试代码放在了我的github仓库[**eespace**](https://github.com/TypeCombinator/eespace/blob/main/examples/smp/main.cpp)中，以后，我也会把平时的一些实验代码放到这个仓库中。
 

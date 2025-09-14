@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Zig - 分类 - TypeCombinator Home</title>
+    <link>https://typecombinator.github.io/categories/zig/</link>
+    <description>TypeCombinator Home</description>
+    <generator>Hugo 0.147.5 &amp; FixIt v0.3.20</generator>
+    <language>en-us</language>
+    <managingEditor>typecombinator@foxmail.com (TypeCombinator)</managingEditor>
+    <webMaster>typecombinator@foxmail.com (TypeCombinator)</webMaster>
+    <lastBuildDate>Sun, 14 Sep 2025 09:21:22 +0800</lastBuildDate>
+    <atom:link href="https://typecombinator.github.io/categories/zig/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>用Zig语言实现mock_head</title>
+      <link>https://typecombinator.github.io/posts/8a1e6a3/</link>
+      <pubDate>Sun, 14 Sep 2025 09:21:22 +0800</pubDate><author>typecombinator@foxmail.com (TypeCombinator)</author>
+      <guid>https://typecombinator.github.io/posts/8a1e6a3/</guid>
+      <category domain="https://typecombinator.github.io/categories/zig/">Zig</category>
+      <description>&lt;h2 class=&#34;heading-element&#34; id=&#34;前言&#34;&gt;&lt;span&gt;前言&lt;/span&gt;&#xA;  &lt;a href=&#34;#%e5%89%8d%e8%a8%80&#34; class=&#34;heading-mark&#34;&gt;&#xA;    &lt;svg class=&#34;octicon octicon-link&#34; viewBox=&#34;0 0 16 16&#34; version=&#34;1.1&#34; width=&#34;16&#34; height=&#34;16&#34; aria-hidden=&#34;true&#34;&gt;&lt;path d=&#34;m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z&#34;&gt;&lt;/path&gt;&lt;/svg&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&lt;p&gt;周末闲来无事，将之前的Zig代码整理记录来吧！对于Zig语言，我已经关注了相当长的一段时间，作为一门新语言，它有着相当多的良好设计，最值得一提的是&lt;code&gt;compiletime&lt;/code&gt;，并将类型作为值，这样在编译期对类型的计算和写运行时代码基本无异，而在C++中，与此特性对等的是C++26的&lt;a href=&#34;https://wg21.link/p2996&#34;target=&#34;_blank&#34; rel=&#34;external nofollow noopener noreferrer&#34;&gt;&lt;strong&gt;P2996&lt;/strong&gt;&lt;/a&gt;，不过C++类型系统相当复杂，当前的&lt;a href=&#34;https://github.com/bloomberg/clang-p2996&#34;target=&#34;_blank&#34; rel=&#34;external nofollow noopener noreferrer&#34;&gt;P2996实现&lt;/a&gt;只能算是功能验证，编译还很缓慢，而Zig从设计之初就考虑到了编译速度，这是一个相当大的优势。&#xA;顺带一提，&lt;strong&gt;Kris Jusiak&lt;/strong&gt;的元编程库&lt;a href=&#34;https://github.com/qlibs/mp&#34;target=&#34;_blank&#34; rel=&#34;external nofollow noopener noreferrer&#34;&gt;mp&lt;/a&gt;可以作为P2996的开胃菜，这在我之前的&lt;a href=&#34;https://typecombinator.github.io/posts/3ff4ce7&#34;target=&#34;_blank&#34; rel=&#34;external nofollow noopener noreferrer&#34;&gt;文章&lt;/a&gt;有解读。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

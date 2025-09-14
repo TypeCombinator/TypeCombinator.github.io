@@ -44,7 +44,7 @@ constexpr auto&& forward_like(U&& x) noexcept {
 }
 ```
 
-这个实现很符合直觉，于是我心里却冒出疑问，对于`tuple`只能特殊处理了吗？细看之下才发现cppreference有如下描述：
+这个实现很符合直觉，于是我心里冒出了疑问，对于`tuple`只能特殊处理了吗？细看之下才发现cppreference有如下描述：
 
 ```
 The main scenario that std::forward_like caters to is adapting “far” objects. Neither the tuple nor the language scenarios do the right thing for that main use-case, so the merge model is used for std::forward_like.

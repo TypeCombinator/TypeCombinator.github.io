@@ -11,8 +11,8 @@
     <title>TypeCombinator Home</title><meta name="author" content="TypeCombinator">
 <meta name="description" content="">
   <meta itemprop="name" content="TypeCombinator Home">
-  <meta itemprop="datePublished" content="2025-09-14T09:21:22+08:00">
-  <meta itemprop="dateModified" content="2025-09-14T09:21:22+08:00"><meta property="og:url" content="https://typecombinator.github.io/">
+  <meta itemprop="datePublished" content="2025-09-18T09:30:00+08:00">
+  <meta itemprop="dateModified" content="2025-09-18T09:30:00+08:00"><meta property="og:url" content="https://typecombinator.github.io/">
   <meta property="og:site_name" content="TypeCombinator Home">
   <meta property="og:title" content="TypeCombinator Home">
   <meta property="og:locale" content="en_us">
@@ -63,7 +63,18 @@
       </ul>
     </nav>
   </div>
-</header><main class="container"><div class="page home posts"><article class="single summary" itemscope itemtype="http://schema.org/Article"><h2 class="single-title" itemprop="name headline"><span title="转载" class="icon-repost"><i class="fa-solid fa-share fa-fw" aria-hidden="true"></i></span><a href="/posts/8a1e6a3/">用Zig语言实现mock_head</a>
+</header><main class="container"><div class="page home posts"><article class="single summary" itemscope itemtype="http://schema.org/Article"><h2 class="single-title" itemprop="name headline"><span title="转载" class="icon-repost"><i class="fa-solid fa-share fa-fw" aria-hidden="true"></i></span><a href="/posts/94eb77e/">浅谈C&#43;&#43;最佳异步范式</a>
+  </h2><div class="post-meta"><span class="post-author"><a href="https://github.com/TypeCombinator" title="作者"target="_blank" rel="external nofollow noopener noreferrer author" class="author"><img class="avatar" src='https://github.com/TypeCombinator.png' alt="TypeCombinator" height="16" width="16">&nbsp;TypeCombinator</a></span>&nbsp;<span class="post-publish" title='2025-09-18 09:30:00'>发布于 <time datetime="2025-09-18">2025-09-18</time></span><span class="post-included-in">&nbsp;收录于 <a href="/categories/c++/" class="post-category" title="分类 - C++"><i class="fa-regular fa-folder fa-fw" aria-hidden="true"></i> C++</a></span></div><div class="content"><p><em>「C++老仙，法力无边，攻无不克，战无不胜！」</em>—— 来自一名C++杂兵</p>
+<h3 class="heading-element" id="cpsmonad"><span>CPS+Monad</span>
+  <a href="#cpsmonad" class="heading-mark">
+    <svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg>
+  </a>
+</h3><ul>
+<li>future/promise+then链：过去式，eager模式，类型擦除</li>
+<li><code> std::exectution</code>：未来式，lazy模式，类型安全</li>
+</ul></div><div class="post-footer">
+    <a href="/posts/94eb77e/">阅读全文</a><div class="post-tags"><i class="fa-solid fa-tags fa-fw me-1" aria-hidden="true"></i><a href='/tags/blog/' class="post-tag">Blog</a></div></div>
+</article><article class="single summary" itemscope itemtype="http://schema.org/Article"><h2 class="single-title" itemprop="name headline"><span title="转载" class="icon-repost"><i class="fa-solid fa-share fa-fw" aria-hidden="true"></i></span><a href="/posts/8a1e6a3/">用Zig语言实现mock_head</a>
   </h2><div class="post-meta"><span class="post-author"><a href="https://github.com/TypeCombinator" title="作者"target="_blank" rel="external nofollow noopener noreferrer author" class="author"><img class="avatar" src='https://github.com/TypeCombinator.png' alt="TypeCombinator" height="16" width="16">&nbsp;TypeCombinator</a></span>&nbsp;<span class="post-publish" title='2025-09-14 09:21:22'>发布于 <time datetime="2025-09-14">2025-09-14</time></span><span class="post-included-in">&nbsp;收录于 <a href="/categories/zig/" class="post-category" title="分类 - Zig"><i class="fa-regular fa-folder fa-fw" aria-hidden="true"></i> Zig</a></span></div><div class="content"><h3 class="heading-element" id="前言"><span>前言</span>
   <a href="#%e5%89%8d%e8%a8%80" class="heading-mark">
     <svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg>

@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html itemscope itemtype="http://schema.org/WebPage" lang="en-us">
+  <head>
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+    <meta name="robots" content="noodp" />
+    <title>CppCon2025笔记之libc&#43;&#43; - TypeCombinator Home</title><meta name="author" content="TypeCombinator">
+<meta name="description" content="看到华人小哥，必须得关注一下，演讲题目是《Implement Standard Library: Design Decisions, Optimisations and Testing in Implementing Libc&#43;&#43;》，作者Hui Xie是libc&#43;&#43;的贡献者、BSI成员、WG21成员……谈了一些libc&#43;&#43;中相关的设计决策、优化和测试细节。本文结合演讲视频和仓库幻灯片整理而来，任何转述错误和个人观点与原作者无关，推荐观看原视频，原作者的讲解更清晰。
+"><meta name="keywords" content='blog'>
+  <meta itemprop="name" content="CppCon2025笔记之libc&#43;&#43;">
+  <meta itemprop="description" content="看到华人小哥，必须得关注一下，演讲题目是《Implement Standard Library: Design Decisions, Optimisations and Testing in Implementing Libc&#43;&#43;》，作者Hui Xie是libc&#43;&#43;的贡献者、BSI成员、WG21成员……谈了一些libc&#43;&#43;中相关的设计决策、优化和测试细节。本文结合演讲视频和仓库幻灯片整理而来，任何转述错误和个人观点与原作者无关，推荐观看原视频，原作者的讲解更清晰。">
+  <meta itemprop="datePublished" content="2025-09-25T22:52:13+08:00">
+  <meta itemprop="dateModified" content="2025-09-25T22:52:13+08:00">
+  <meta itemprop="wordCount" content="1116">
+  <meta itemprop="keywords" content="Blog"><meta property="og:url" content="https://typecombinator.github.io/posts/86053000/">
+  <meta property="og:site_name" content="TypeCombinator Home">
+  <meta property="og:title" content="CppCon2025笔记之libc&#43;&#43;">
+  <meta property="og:description" content="看到华人小哥，必须得关注一下，演讲题目是《Implement Standard Library: Design Decisions, Optimisations and Testing in Implementing Libc&#43;&#43;》，作者Hui Xie是libc&#43;&#43;的贡献者、BSI成员、WG21成员……谈了一些libc&#43;&#43;中相关的设计决策、优化和测试细节。本文结合演讲视频和仓库幻灯片整理而来，任何转述错误和个人观点与原作者无关，推荐观看原视频，原作者的讲解更清晰。">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-09-25T22:52:13+08:00">
+    <meta property="article:modified_time" content="2025-09-25T22:52:13+08:00">
+    <meta property="article:tag" content="Blog">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="CppCon2025笔记之libc&#43;&#43;">
+  <meta name="twitter:description" content="看到华人小哥，必须得关注一下，演讲题目是《Implement Standard Library: Design Decisions, Optimisations and Testing in Implementing Libc&#43;&#43;》，作者Hui Xie是libc&#43;&#43;的贡献者、BSI成员、WG21成员……谈了一些libc&#43;&#43;中相关的设计决策、优化和测试细节。本文结合演讲视频和仓库幻灯片整理而来，任何转述错误和个人观点与原作者无关，推荐观看原视频，原作者的讲解更清晰。">
+<meta name="application-name" content="FixIt">
+<meta name="apple-mobile-web-app-title" content="FixIt"><meta name="theme-color" data-light="#f8f8f8" data-dark="#252627" content="#f8f8f8"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5"><link rel="canonical" type="text/html" href="https://typecombinator.github.io/posts/86053000/" title="CppCon2025笔记之libc&#43;&#43; - TypeCombinator Home" /><link rel="prev" type="text/html" href="https://typecombinator.github.io/posts/94eb77e/" title="浅谈C&#43;&#43;最佳异步范式" /><link rel="alternate" type="text/markdown" href="https://typecombinator.github.io/posts/86053000/index.md" title="CppCon2025笔记之libc++ - TypeCombinator Home"><link rel="stylesheet" href="/css/style.min.css"><link rel="preload" href="/lib/fontawesome-free/all.min.css" as="style" onload="this.removeAttribute('onload');this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="/lib/fontawesome-free/all.min.css"></noscript><link rel="preload" href="/lib/animate/animate.min.css" as="style" onload="this.removeAttribute('onload');this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="/lib/animate/animate.min.css"></noscript><script type="application/ld+json">
+  {
+    "@context": "http://schema.org",
+    "@type": "BlogPosting",
+    "headline": "CppCon2025笔记之libc++",
+    "inLanguage": "en-us",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https:\/\/typecombinator.github.io\/posts\/86053000\/"
+    },"genre": "posts","keywords": "blog","wordcount":  1116 ,
+    "url": "https:\/\/typecombinator.github.io\/posts\/86053000\/","datePublished": "2025-09-25T22:52:13+08:00","dateModified": "2025-09-25T22:52:13+08:00","publisher": {
+      "@type": "Organization",
+      "name": ""},"author": {
+        "@type": "Person",
+        "name": "TypeCombinator"
+      },"description": ""
+  }
+  </script><script src="/js/head/color-scheme.min.js"></script></head>
+  <body data-header-desktop="sticky" data-header-mobile="auto"><div class="wrapper" data-page-style="normal"><header class="desktop animate__faster" id="header-desktop">
+  <div class="header-wrapper">
+    <div class="header-title">
+      <a href="/" title="TypeCombinator Home"><span class="header-title-text">TypeCombinator Home</span></a><span class="header-subtitle"></span></div>
+    <nav>
+      <ul class="menu"><li class="menu-item">
+              <a class="menu-link" href="/archives/"><i class="fa-solid fa-archive fa-fw fa-sm" aria-hidden="true"></i> Archives</a></li><li class="menu-item">
+              <a class="menu-link" href="/categories/"><i class="fa-solid fa-folder-tree fa-fw fa-sm" aria-hidden="true"></i> Categories</a></li><li class="menu-item">
+              <a class="menu-link" href="/tags/"><i class="fa-solid fa-tags fa-fw fa-sm" aria-hidden="true"></i> Tags</a></li><li class="menu-item delimiter"></li><li class="menu-item theme-switch" title="切换主题">
+          <i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i>
+        </li></ul>
+    </nav>
+  </div>
+</header><header class="mobile animate__faster" id="header-mobile">
+  <div class="header-container">
+    <div class="header-wrapper">
+      <div class="header-title">
+        <a href="/" title="TypeCombinator Home"><span class="header-title-text">TypeCombinator Home</span></a><span class="header-subtitle"></span></div>
+      <div class="menu-toggle" id="menu-toggle-mobile">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+    <nav>
+      <ul class="menu" id="menu-mobile"><li class="menu-item"><a class="menu-link" href="/archives/"><i class="fa-solid fa-archive fa-fw fa-sm" aria-hidden="true"></i> Archives</a></li><li class="menu-item"><a class="menu-link" href="/categories/"><i class="fa-solid fa-folder-tree fa-fw fa-sm" aria-hidden="true"></i> Categories</a></li><li class="menu-item"><a class="menu-link" href="/tags/"><i class="fa-solid fa-tags fa-fw fa-sm" aria-hidden="true"></i> Tags</a></li><li class="menu-item menu-system">
+          <span class="menu-system-item theme-switch" title="切换主题"><i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i></span></li>
+      </ul>
+    </nav>
+  </div>
+</header><main class="container"><aside class="aside-collection animate__animated animate__fadeIn animate__faster" aria-label="合集"></aside>
+
+  <article class="page single">
+    <div class="header"><h1 class="single-title animate__animated animate__flipInX"><span title="转载" class="icon-repost"><i class="fa-solid fa-share fa-fw" aria-hidden="true"></i></span><span>CppCon2025笔记之libc&#43;&#43;</span>
+      </h1></div><div class="post-meta">
+      <div class="post-meta-line"><span class="post-author"><a href="https://github.com/TypeCombinator" title="作者"target="_blank" rel="external nofollow noopener noreferrer author" class="author"><img class="avatar" src='https://github.com/TypeCombinator.png' alt="TypeCombinator" height="16" width="16">&nbsp;TypeCombinator</a></span><span class="post-included-in">&nbsp;收录于 <a href="/categories/c++/" class="post-category" title="分类 - C++"><i class="fa-regular fa-folder fa-fw" aria-hidden="true"></i> C++</a></span></div><div class="post-meta-line"><span title="发布于 2025-09-25 22:52:13"><i class="fa-solid fa-calendar-days fa-fw me-1" aria-hidden="true"></i><time datetime="2025-09-25">2025-09-25</time></span>&nbsp;<span title="1116 字"><i class="fa-solid fa-pencil-alt fa-fw me-1" aria-hidden="true"></i>约 1200 字</span>&nbsp;<span><i class="fa-regular fa-clock fa-fw me-1" aria-hidden="true"></i>预计阅读 6 分钟</span>&nbsp;</div>
+    </div><div class="details toc" id="toc-static" data-kept="false">
+        <div class="details-summary toc-title">
+          <span>目录</span>
+          <span><i class="details-icon fa-solid fa-angle-right" aria-hidden="true"></i></span>
+        </div>
+        <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#stdexpected">std::expected</a></li>
+    <li><a href="#stop_token">stop_token</a></li>
+    <li><a href="#ranges">ranges</a>
+      <ul>
+        <li><a href="#segmented-iterators">Segmented Iterators</a></li>
+        <li><a href="#rangescopy">ranges::copy</a></li>
+        <li><a href="#flat_map-insertion">flat_map Insertion</a></li>
+      </ul>
+    </li>
+    <li><a href="#testing-in-libc">Testing in libc++</a></li>
+    <li><a href="#另外">另外</a></li>
+  </ul>
+</nav></div>
+      </div><div class="content" id="content"><p>看到华人小哥，必须得关注一下，演讲题目是《Implement Standard Library: Design Decisions, Optimisations and Testing in Implementing Libc++》，作者<a href="https://github.com/huixie90"target="_blank" rel="external nofollow noopener noreferrer"><strong>Hui Xie</strong></a>是libc++的贡献者、BSI成员、WG21成员……谈了一些libc++中相关的设计决策、优化和测试细节。本文结合演讲视频和仓库幻灯片整理而来，任何转述错误和个人观点与原作者无关，<strong>推荐观看原视频</strong>，原作者的讲解更清晰。</p>
+<h2 class="heading-element" id="stdexpected"><span>std::expected</span>
+  <a href="#stdexpected" class="heading-mark">
+    <svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg>
+  </a>
+</h2><p>使用<code>[[no_unique_address]]</code>复用非C结构体因内存对齐而引入的尾部padding，考虑如下代码：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">Foo</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="n">c</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">bool</span> <span class="n">b</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl"><span class="k">enum</span> <span class="k">class</span> <span class="nc">ErrCode</span> <span class="o">:</span> <span class="kt">int</span> <span class="p">{</span> <span class="n">Err1</span><span class="p">,</span> <span class="n">Err2</span><span class="p">,</span> <span class="n">Err3</span> <span class="p">};</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>由于内存对齐，末尾有2字节的padding（<strong>先记住这一点</strong>），可以得出<code>sizeof(Foo)</code>为8，那么<code>sizeof(std::expected&lt;Foo, ErrCode&gt;)</code>是多少呢？如果使用libstdc++，结果是12，但是使用libc++，结果则是8，为什么呢？libc++的<code>std::expected</code>简化代码如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">Val</span><span class="p">,</span> <span class="k">class</span> <span class="nc">Err</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">expected</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">union</span> <span class="nc">U</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="na">[[no_unique_address]]</span> <span class="n">Val</span> <span class="n">val_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="na">[[no_unique_address]]</span> <span class="n">Err</span> <span class="n">err_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">};</span>
+</span></span><span class="line"><span class="cl">    <span class="na">[[no_unique_address]]</span> <span class="n">U</span> <span class="n">u_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">bool</span> <span class="n">has_val_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p><img loading="lazy" src='/blog/cppcon2025_huixie90/expected0.png' alt="/blog/cppcon2025_huixie90/expected0.png"></p>
+<p>因为 <em>「The attribute-token no_unique_address specifies that a non-static data member is a potentially-overlapping subobject」</em>，<code>class Foo</code>不是C结构体，其尾部padding被复用了。收益是更小的内存占用，更好的缓存局部性，<code>std::expected</code>通常用于错误处理，并用于返回值，对于如下代码：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">std</span><span class="o">::</span><span class="n">expected</span><span class="o">&lt;</span><span class="n">Foo</span><span class="p">,</span> <span class="n">ErrCode</span><span class="o">&gt;</span> <span class="n">compute</span><span class="p">()</span> <span class="p">{</span> <span class="k">return</span> <span class="n">Foo</span><span class="p">{};</span> <span class="p">}</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>使用gcc和libstdc++编译输出的汇编代码如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">compute():
+</span></span><span class="line"><span class="cl">        mov     DWORD PTR [rsp-24], 0
+</span></span><span class="line"><span class="cl">        xor     eax, eax
+</span></span><span class="line"><span class="cl">        mov     BYTE PTR [rsp-24], 1
+</span></span><span class="line"><span class="cl">        mov     ecx, DWORD PTR [rsp-24]
+</span></span><span class="line"><span class="cl">        mov     rdx, rcx
+</span></span><span class="line"><span class="cl">        ret</span></span></code></pre></td></tr></table>
+</div>
+</div><p>而使用clang和libc++编译输出的汇编代码如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">compute():
+</span></span><span class="line"><span class="cl">        movabs  rax, 281474976710656
+</span></span><span class="line"><span class="cl">        ret</span></span></code></pre></td></tr></table>
+</div>
+</div><p>那么只有收益吗？想象一下，邻居家有一个大院子，一部分用于游泳池，一部分用于花园……还留有一些空地，作为其邻居，如果看到块空地没用，冒然将自己的物品放上去，会发生什么？自然是少不了一番邻里不合的景象了！假如将<code>std::expected</code>拷贝构造函数实现如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">Val</span><span class="p">,</span> <span class="k">class</span> <span class="nc">Err</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">expected</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="k">public</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">expected</span><span class="p">(</span><span class="k">const</span> <span class="n">expected</span><span class="o">&amp;</span> <span class="n">other</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="o">:</span> <span class="n">has_val_</span><span class="p">(</span><span class="n">other</span><span class="p">.</span><span class="n">has_val_</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">has_val_</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">          <span class="n">std</span><span class="o">::</span><span class="n">construct_at</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">addressof</span><span class="p">(</span><span class="n">u_</span><span class="p">.</span><span class="n">val_</span><span class="p">),</span> <span class="n">other</span><span class="p">.</span><span class="n">u_</span><span class="p">.</span><span class="n">val_</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">          <span class="n">std</span><span class="o">::</span><span class="n">construct_at</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">addressof</span><span class="p">(</span><span class="n">u_</span><span class="p">.</span><span class="n">err_</span><span class="p">),</span> <span class="n">other</span><span class="p">.</span><span class="n">u_</span><span class="p">.</span><span class="n">err_</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>乍一看，以上的代码是符合直觉的，但是如果尝试运行如下代码呢？</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">std</span><span class="o">::</span><span class="n">expected</span><span class="o">&lt;</span><span class="n">Foo</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">e1</span><span class="p">(</span><span class="n">Foo</span><span class="p">{});</span>
+</span></span><span class="line"><span class="cl">    <span class="n">std</span><span class="o">::</span><span class="n">expected</span> <span class="n">e2</span><span class="p">(</span><span class="n">e1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">assert</span><span class="p">(</span><span class="n">e2</span><span class="p">.</span><span class="n">has_value</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>断言失败了！因为 <em>「To zero-initialize an object or reference of type T means: … if T is a (possibly cv-qualified) non-union class type, its padding bits ([basic.types.general]) are initialized to zero bits and …」</em> ，邻居表示，我清扫自家院子，把空地的杂物扔了，也怪不得我啊！对于<code>class Foo</code>，<code>construct_at</code>会将padding字段清零，附带着<code>has_val_</code>也被清零了，修复该问题的办法就是将<code>has_val_</code>的赋值挪到调用<code>std::construct_at</code>之后，修改如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">Val</span><span class="p">,</span> <span class="k">class</span> <span class="nc">Err</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">expected</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="k">public</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">expected</span><span class="p">(</span><span class="k">const</span> <span class="n">expected</span><span class="o">&amp;</span> <span class="n">other</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">other</span><span class="p">.</span><span class="n">has_val_</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">          <span class="n">std</span><span class="o">::</span><span class="n">construct_at</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">addressof</span><span class="p">(</span><span class="n">u_</span><span class="p">.</span><span class="n">val_</span><span class="p">),</span> <span class="n">other</span><span class="p">.</span><span class="n">u_</span><span class="p">.</span><span class="n">val_</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">          <span class="n">std</span><span class="o">::</span><span class="n">construct_at</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">addressof</span><span class="p">(</span><span class="n">u_</span><span class="p">.</span><span class="n">err_</span><span class="p">),</span> <span class="n">other</span><span class="p">.</span><span class="n">u_</span><span class="p">.</span><span class="n">err_</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">        <span class="n">has_val_</span> <span class="o">=</span> <span class="n">other</span><span class="p">.</span><span class="n">has_val_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>那么，问题被终结了吗？考虑<code>std::expected</code>套娃，代码如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">std</span><span class="o">::</span><span class="n">expected</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">expected</span><span class="o">&lt;</span><span class="n">Foo</span><span class="p">,</span> <span class="n">ErrCode</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">ErrCode</span><span class="o">&gt;</span> <span class="n">e</span> <span class="o">=</span> <span class="p">...;</span>
+</span></span><span class="line"><span class="cl"><span class="n">e</span><span class="p">.</span><span class="n">value</span><span class="p">().</span><span class="n">emplace</span><span class="p">();</span> <span class="c1">// the inner expected construct_at will overwrite outer expected bool
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>此时，<code>std::expected</code>的内存布局如下：</p>
+<p><img loading="lazy" src='/blog/cppcon2025_huixie90/expected1_nest0.png' alt="/blog/cppcon2025_huixie90/expected1_nest0.png"></p>
+<p>对内层的<code>expected</code>对象调用<code>emplace</code>，会调用<code>construct_at</code>将padding空间给清零，外层<code>expected</code>的<code>has_val_</code>也附带着被清零了，这和前面拷贝构造函数的问题类似，更为直观的代码如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">struct</span> <span class="nc">Bar</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="na">[[no_unique_address]]</span> <span class="n">std</span><span class="o">::</span><span class="n">expected</span><span class="o">&lt;</span><span class="n">Foo</span><span class="p">,</span> <span class="n">ErrCode</span><span class="o">&gt;</span> <span class="n">e</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="n">c</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">Bar</span> <span class="n">bar</span> <span class="o">=</span> <span class="p">...;</span>
+</span></span><span class="line"><span class="cl"><span class="n">bar</span><span class="p">.</span><span class="n">c</span> <span class="o">=</span> <span class="sc">&#39;c&#39;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">bar</span><span class="p">.</span><span class="n">e</span><span class="p">.</span><span class="n">emplace</span><span class="p">();</span> <span class="c1">// construct_at will overwrite c
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p><code>struct Bar</code>的内存布局如下：</p>
+<p><img loading="lazy" src='/blog/cppcon2025_huixie90/expected1_nest1.png' alt="/blog/cppcon2025_huixie90/expected1_nest1.png"></p>
+<p>成员<code>char c</code>复用了前一成员的尾部padding空间，<code>construct_at</code>会将成员<code>c</code>的内存清零，以上代码中的字符写入成了无效操作！为了解决以上问题，再次修改代码：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">Val</span><span class="p">,</span> <span class="k">class</span> <span class="nc">Err</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">expected</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="nc">repr</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">union</span> <span class="nc">U</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="na">[[no_unique_address]]</span> <span class="n">Val</span> <span class="n">val_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="na">[[no_unique_address]]</span> <span class="n">Err</span> <span class="n">err_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">};</span>
+</span></span><span class="line"><span class="cl">        <span class="na">[[no_unique_address]]</span> <span class="n">U</span> <span class="n">u_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="kt">bool</span> <span class="n">has_val_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">};</span>
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl">    <span class="n">repr</span> <span class="n">repr_</span><span class="p">;</span> <span class="c1">// no [[no_unique_address]] on this member
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">};</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>关键在于<code>repr repr_;</code>这行代码没有加<code>[[no_unique_address]]</code>，这打断了<code>[[no_unique_address]]</code>的递归，<code>char c</code>不会再复用尾部padding，此时，<code>struct Bar</code>的内存布局如下：</p>
+<p><img loading="lazy" src='/blog/cppcon2025_huixie90/expected2.png' alt="/blog/cppcon2025_huixie90/expected2.png"></p>
+<p>那么，经过以上修改，这就是最佳的代码了吗？如果<code>std::expected</code>传入的<code>Val</code>或<code>Err</code>类型没有padding呢？比如<code>std::expected&lt;unsigned int, int&gt;</code>，成员<code>bool has_val_</code>将没有可以复用的尾部padding，其内存布局如下：</p>
+<p><img loading="lazy" src='/blog/cppcon2025_huixie90/expected3.png' alt="/blog/cppcon2025_huixie90/expected3.png"></p>
+<p>最终修改代码，添加对此种情况的分支处理，如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">Val</span><span class="p">,</span> <span class="k">class</span> <span class="nc">Err</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="nc">repr</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">union</span> <span class="nc">U</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="na">[[no_unique_address]]</span> <span class="n">Val</span> <span class="n">val_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="na">[[no_unique_address]]</span> <span class="n">Err</span> <span class="n">err_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">};</span>
+</span></span><span class="line"><span class="cl">    <span class="na">[[no_unique_address]]</span> <span class="n">U</span> <span class="n">u_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">bool</span> <span class="n">has_val_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">Val</span><span class="p">,</span> <span class="k">class</span> <span class="nc">Err</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="nc">expected_base</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">repr</span><span class="o">&lt;</span><span class="n">Val</span><span class="p">,</span> <span class="n">Err</span><span class="o">&gt;</span> <span class="n">repr_</span><span class="p">;</span> <span class="c1">// no [[no_unique_address]]
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">};</span>
+</span></span><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">Val</span><span class="p">,</span> <span class="k">class</span> <span class="nc">Err</span><span class="o">&gt;</span> <span class="k">requires</span> <span class="n">bool_is_not_in_padding</span>
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="nc">expected_base</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="na">[[no_unique_address]]</span> <span class="n">repr</span><span class="o">&lt;</span><span class="n">Val</span><span class="p">,</span> <span class="n">Err</span><span class="o">&gt;</span> <span class="n">repr_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">Val</span><span class="p">,</span> <span class="k">class</span> <span class="nc">Err</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">expected</span> <span class="o">:</span> <span class="n">expected_base</span><span class="o">&lt;</span><span class="n">Val</span><span class="p">,</span> <span class="n">Err</span><span class="o">&gt;</span> <span class="p">{};</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>当成员<code>bool has_val_</code>没有复用padding的时候，才添加<code>[[no_unique_address]]</code>，即条件属性，此时<code>repr&lt;Val, Err&gt; repr_</code>的尾部padding是完全受控的，当前的<code>expected</code>不会读写这些尾部padding，因此可以安全地被外部复用。</p>
+<p>以下为<strong>个人拙见</strong>，过去要实现potentially-overlapping子对象只能通过继承，现在使用组合加上<code>[[no_unique_address]]</code>属性也能实现，这意味着某个类即使带有<code>final</code>说明符也阻止不了overlapping，也不能有魔法代码去读写尾部padding，比如使用<code>std::memset</code>和<code>std::memcpy</code>除了要求 trivially-copyable以外，还要求不能是potentially-overlapping的子对象，否则是UB，比如使用libc++的<code>std::expected</code>这样写就会有问题：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">Foo</span> <span class="k">final</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="n">c</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">bool</span> <span class="n">b</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">   <span class="k">public</span><span class="o">:</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">void</span> <span class="n">clear</span><span class="p">()</span> <span class="k">noexcept</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="c1">// *this = {}; // Good, but little bit slow.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="n">std</span><span class="o">::</span><span class="n">memset</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="k">this</span><span class="p">));</span> <span class="c1">// Bad, but fast.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">enum</span> <span class="k">class</span> <span class="nc">ErrCode</span> <span class="o">:</span> <span class="kt">int</span> <span class="p">{</span> <span class="n">Err1</span><span class="p">,</span> <span class="n">Err2</span><span class="p">,</span> <span class="n">Err3</span> <span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">static_assert</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">is_trivially_copyable_v</span><span class="o">&lt;</span><span class="n">Foo</span><span class="o">&gt;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">std</span><span class="o">::</span><span class="n">expected</span><span class="o">&lt;</span><span class="n">Foo</span><span class="p">,</span> <span class="n">ErrCode</span><span class="o">&gt;</span> <span class="n">e</span><span class="p">{</span><span class="n">Foo</span><span class="p">{}};</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="k">static_assert</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">==</span> <span class="mi">8</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">e</span><span class="p">.</span><span class="n">value</span><span class="p">().</span><span class="n">clear</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">assert</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">has_value</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// clang++ -std=c++23 -stdlib=libc++
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>以上只是为了说明C++20引入<code>[[no_unique_address]]</code>之后的变化，而不是指libc++的<code>std::expected</code>实现存在问题。如果有尾部padding，又不想被复用，且不想手动填充对齐呢？标准也没有提供<code>[[non_overlapping]]</code>这样的属性啊！ 想来简单的办法就是借用下transparent comparator这种方案，不想被复用的类型就加一行<code>using non_overlapping = ???;</code>这样的代码，输入此类型的模板类再使用<code>is_non_overlapping</code>检测下做相应处理，或者把逻辑反过来？</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="k">concept</span> <span class="n">is_non_overlapping</span> <span class="o">=</span> <span class="k">requires</span> <span class="p">{</span> <span class="k">typename</span> <span class="n">T</span><span class="o">::</span><span class="n">non_overlapping</span><span class="p">;</span> <span class="p">};</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>这样把工作转移给库作者了，也不太合适，那么用<strong>匿名结构体</strong>包裹一下呢？又不符合C++标准，还是手动对齐，远离魔法代码吧！</p>
+<h2 class="heading-element" id="stop_token"><span>stop_token</span>
+  <a href="#stop_token" class="heading-mark">
+    <svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg>
+  </a>
+</h2><p><code>stop_source</code>, <code>stop_token</code>和<code>stop_callback</code>是C++20提供的用于协作式地停止线程的3个组件，其中使用了一个共享的状态，大体实现如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">stop_token</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">__stop_state</span><span class="o">&gt;</span> <span class="n">state_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">stop_source</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">__stop_state</span><span class="o">&gt;</span> <span class="n">state_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">Callback</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">stop_callback</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="na">[[no_unique_address]]</span> <span class="n">Callback</span> <span class="n">callback_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">__stop_state</span><span class="o">&gt;</span> <span class="n">state_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>其中的<code>__stop_state</code>可以实现如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">__stop_state</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span> <span class="n">stop_requested_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="kt">unsigned</span><span class="o">&gt;</span> <span class="n">stop_source_count_</span><span class="p">;</span> <span class="c1">// for stop_possible()
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="n">std</span><span class="o">::</span><span class="n">list</span><span class="o">&lt;</span><span class="n">stop_callback</span><span class="o">*&gt;</span> <span class="n">stop_callbacks_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="n">std</span><span class="o">::</span><span class="n">mutex</span> <span class="n">list_mutex_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl"><span class="k">static_assert</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">__stop_state</span><span class="p">)</span> <span class="o">==</span> <span class="mi">72</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="k">static_assert</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">stop_token</span><span class="p">)</span> <span class="o">==</span> <span class="mi">16</span><span class="p">);</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>libc++优化实现大体如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">__stop_state</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="c1">// The &#34;callback list locked&#34; bit implements a 1-bit lock to guard
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="c1">// operations on the callback list
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="c1">//
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="c1">//       31 - 2          |  1                   |    0           |
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="c1">//  stop_source counter  | callback list locked | stop_requested |
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="n">atomic</span><span class="o">&lt;</span><span class="kt">uint32_t</span><span class="o">&gt;</span> <span class="n">state_</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl">  <span class="c1">// Reference count for stop_token + stop_callback + stop_source
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="n">atomic</span><span class="o">&lt;</span><span class="kt">uint32_t</span><span class="o">&gt;</span> <span class="n">ref_count_</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl">  <span class="c1">// Lightweight intrusive non-owning list of callbacks
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="c1">// Only stores a pointer to the root node
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="n">__intrusive_list_view</span><span class="o">&lt;</span><span class="n">stop_callback_base</span><span class="o">&gt;</span> <span class="n">callback_list_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl"><span class="k">static_assert</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">__stop_state</span><span class="p">)</span> <span class="o">==</span> <span class="mi">16</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="k">static_assert</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">stop_token</span><span class="p">)</span> <span class="o">==</span> <span class="mi">8</span><span class="p">);</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>首先是充分利用原子变量的每一个比特，不再使用<code>std::mutex</code>，然后是改用侵入式shared_ptr和侵入式链表，<code>__stop_state</code>内存占用大幅减小，<code>stop_token</code>降低为一个指针大小。</p>
+<h2 class="heading-element" id="ranges"><span>ranges</span>
+  <a href="#ranges" class="heading-mark">
+    <svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg>
+  </a>
+</h2><h3 class="heading-element" id="segmented-iterators"><span>Segmented Iterators</span>
+  <a href="#segmented-iterators" class="heading-mark">
+    <svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg>
+  </a>
+</h3><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">std</span><span class="o">::</span><span class="n">deque</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">d</span> <span class="o">=</span> <span class="p">...</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 1
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">for</span> <span class="p">(</span><span class="kt">int</span><span class="o">&amp;</span> <span class="nl">i</span> <span class="p">:</span> <span class="n">d</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">i</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">clamp</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">500</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 2
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">std</span><span class="o">::</span><span class="n">ranges</span><span class="o">::</span><span class="n">for_each</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">[](</span><span class="kt">int</span><span class="o">&amp;</span> <span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">i</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">clamp</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">500</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">});</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>以上代码的<code>std::ranges::for_each</code>版本要快得多，原因和<code>std::deque</code>的设计有关，该容器是用block组织的，<code>std::ranges::for_each</code>采用双层循环，契合了<code>std::deque</code>的设计。
+<img loading="lazy" src='/blog/cppcon2025_huixie90/deque.png' alt="/blog/cppcon2025_huixie90/deque.png"></p>
+<h3 class="heading-element" id="rangescopy"><span>ranges::copy</span>
+  <a href="#rangescopy" class="heading-mark">
+    <svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg>
+  </a>
+</h3><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&gt;</span> <span class="n">v</span> <span class="o">=</span> <span class="p">...;</span>
+</span></span><span class="line"><span class="cl"><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">out</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 1
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">out</span><span class="p">.</span><span class="n">reserve</span><span class="p">(</span><span class="n">total_size</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="nl">inner</span> <span class="p">:</span> <span class="n">v</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="nl">i</span><span class="p">:</span> <span class="n">inner</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">out</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 2
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">out</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="n">total_size</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="n">std</span><span class="o">::</span><span class="n">ranges</span><span class="o">::</span><span class="n">copy</span><span class="p">(</span><span class="n">v</span> <span class="o">|</span> <span class="n">std</span><span class="o">::</span><span class="n">views</span><span class="o">::</span><span class="n">join</span><span class="p">,</span> <span class="n">out</span><span class="p">.</span><span class="n">begin</span><span class="p">());</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p><code>std::ranges::copy</code>要快很多，是因为对于以上情形，其内部调用的是<code>std::memmove</code>，代码如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">Iter</span><span class="p">,</span> <span class="k">class</span> <span class="nc">OutIter</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl">  <span class="k">requires</span> <span class="n">is_segmented_iterator</span><span class="o">&lt;</span><span class="n">Iter</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="n">pair</span><span class="o">&lt;</span><span class="n">Iter</span><span class="p">,</span> <span class="n">OutIter</span><span class="o">&gt;</span> <span class="n">__copy</span><span class="p">(</span><span class="n">Iter</span> <span class="n">first</span><span class="p">,</span> <span class="n">Iter</span> <span class="n">last</span><span class="p">,</span> <span class="n">OutIter</span> <span class="n">result</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="n">std</span><span class="o">::</span><span class="n">__for_each_segment</span><span class="p">(</span><span class="n">first</span><span class="p">,</span> <span class="n">last</span><span class="p">,</span> <span class="p">[</span><span class="o">&amp;</span><span class="p">](</span><span class="k">auto</span> <span class="n">inner_first</span><span class="p">,</span> <span class="k">auto</span> <span class="n">inner_last</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">      <span class="n">result</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">__copy</span><span class="p">(</span><span class="n">inner_first</span><span class="p">,</span> <span class="n">inner_last</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">result</span><span class="p">)).</span><span class="n">second</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="p">});</span>
+</span></span><span class="line"><span class="cl">  <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">make_pair</span><span class="p">(</span><span class="n">last</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">result</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">In</span><span class="p">,</span> <span class="k">class</span> <span class="nc">Out</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl">  <span class="k">requires</span> <span class="n">can_lower_copy_assignment_to_memmove</span><span class="o">&lt;</span><span class="n">In</span><span class="p">,</span> <span class="n">Out</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="n">pair</span><span class="o">&lt;</span><span class="n">In</span><span class="o">*</span><span class="p">,</span> <span class="n">Out</span><span class="o">*&gt;</span> <span class="n">__copy</span><span class="p">(</span><span class="n">In</span><span class="o">*</span> <span class="n">first</span><span class="p">,</span> <span class="n">In</span><span class="o">*</span> <span class="n">last</span><span class="p">,</span> <span class="n">Out</span><span class="o">*</span> <span class="n">result</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="n">std</span><span class="o">::</span><span class="n">memmove</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">first</span><span class="p">,</span> <span class="n">last</span> <span class="o">-</span> <span class="n">first</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">make_pair</span><span class="p">(</span><span class="n">last</span><span class="p">,</span> <span class="n">result</span> <span class="o">+</span> <span class="n">n</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 class="heading-element" id="flat_map-insertion"><span>flat_map Insertion</span>
+  <a href="#flat_map-insertion" class="heading-mark">
+    <svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg>
+  </a>
+</h3><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="c1">// flat_map&lt;int, double&gt;
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">class</span> <span class="nc">flat_map</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">keys_</span><span class="p">;</span> <span class="c1">// always sorted
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">values_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="na">[[no_unique_address]]</span> <span class="n">std</span><span class="o">::</span><span class="n">less</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">compare_</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl"><span class="n">std</span><span class="o">::</span><span class="n">flat_map</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">double</span><span class="o">&gt;</span> <span class="n">m1</span> <span class="o">=</span> <span class="p">...;</span>
+</span></span><span class="line"><span class="cl"><span class="n">std</span><span class="o">::</span><span class="n">flat_map</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">double</span><span class="o">&gt;</span> <span class="n">m2</span> <span class="o">=</span> <span class="p">...;</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 1
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="p">[</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">]</span> <span class="o">:</span> <span class="n">m2</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="n">m1</span><span class="p">.</span><span class="n">emplace</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 2
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">m1</span><span class="p">.</span><span class="n">insert_range</span><span class="p">(</span><span class="n">m2</span><span class="p">);</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>使用<code>insert_range</code>更快，代码如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">template</span><span class="o">&lt;</span><span class="n">container</span><span class="o">-</span><span class="n">compatible</span><span class="o">-</span><span class="n">range</span><span class="o">&lt;</span><span class="n">value_type</span><span class="o">&gt;</span> <span class="n">R</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="k">constexpr</span> <span class="kt">void</span> <span class="n">insert_range</span><span class="p">(</span><span class="n">R</span><span class="o">&amp;&amp;</span> <span class="n">rg</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="n">__append</span><span class="p">(</span><span class="n">ranges</span><span class="o">::</span><span class="n">begin</span><span class="p">(</span><span class="n">rg</span><span class="p">),</span> <span class="n">ranges</span><span class="o">::</span><span class="n">end</span><span class="p">(</span><span class="n">rg</span><span class="p">));</span> <span class="c1">// O(M)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span> 
+</span></span><span class="line"><span class="cl">  <span class="k">auto</span> <span class="n">zv</span> <span class="o">=</span> <span class="n">ranges</span><span class="o">::</span><span class="n">views</span><span class="o">::</span><span class="n">zip</span><span class="p">(</span><span class="n">keys_</span><span class="p">,</span> <span class="n">values_</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">  <span class="n">ranges</span><span class="o">::</span><span class="n">sort</span><span class="p">(</span><span class="n">zv</span><span class="p">.</span><span class="n">begin</span><span class="p">()</span> <span class="o">+</span> <span class="n">old_size</span><span class="p">,</span> <span class="n">zv</span><span class="p">.</span><span class="n">end</span><span class="p">());</span> <span class="c1">// O(MLogM)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span> 
+</span></span><span class="line"><span class="cl">  <span class="n">ranges</span><span class="o">::</span><span class="n">inplace_merge</span><span class="p">(</span><span class="n">zv</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">zv</span><span class="p">.</span><span class="n">begin</span><span class="p">()</span> <span class="o">+</span> <span class="n">old_size</span><span class="p">,</span> <span class="n">zv</span><span class="p">.</span><span class="n">end</span><span class="p">());</span> <span class="c1">// O(M+N)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span> 
+</span></span><span class="line"><span class="cl">  <span class="k">auto</span> <span class="n">dup_start</span> <span class="o">=</span> <span class="n">ranges</span><span class="o">::</span><span class="n">unique</span><span class="p">(</span><span class="n">zv</span><span class="p">).</span><span class="n">begin</span><span class="p">();</span> <span class="c1">// O(M+N)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="n">__erase</span><span class="p">(</span><span class="n">dup_start</span><span class="p">);</span> <span class="c1">// O(M+N)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">InputIterator</span><span class="p">,</span> <span class="k">class</span> <span class="nc">Sentinel</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">__append</span><span class="p">(</span><span class="n">InputIterator</span> <span class="n">first</span><span class="p">,</span> <span class="n">Sentinel</span> <span class="n">last</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="k">for</span> <span class="p">(;</span> <span class="n">first</span> <span class="o">!=</span> <span class="n">last</span><span class="p">;</span> <span class="o">++</span><span class="n">first</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span> <span class="n">Val</span><span class="o">&gt;</span> <span class="n">kv</span> <span class="o">=</span> <span class="o">*</span><span class="n">first</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">keys_</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">keys_</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">kv</span><span class="p">.</span><span class="n">first</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">    <span class="n">values_</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">values_</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">kv</span><span class="p">.</span><span class="n">second</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span></span></span></code></pre></td></tr></table>
+</div>
+</div><p>以上代码中的<code>__append</code>是使用<code>for</code>循环一个个插入元素的，还可以更快，作者引入了<code>product_iterator</code>这个<code>concept</code>，代码如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-c++" data-lang="c++"><span class="line"><span class="cl"><span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">Iter</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl">  <span class="k">requires</span> <span class="n">is_product_iterator_of_size</span><span class="o">&lt;</span><span class="n">Iter</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span>
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="n">__append</span><span class="p">(</span><span class="n">Iter</span> <span class="n">first</span><span class="p">,</span> <span class="n">Iter</span> <span class="n">last</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="k">using</span> <span class="n">Traits</span> <span class="o">=</span> <span class="n">product_iterator_traits</span><span class="o">&lt;</span><span class="n">Iter</span><span class="o">&gt;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="n">keys_</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">keys_</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span>
+</span></span><span class="line"><span class="cl">      <span class="n">Traits</span><span class="o">::</span><span class="k">template</span> <span class="n">get_iterator</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">first</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">      <span class="n">Traits</span><span class="o">::</span><span class="k">template</span> <span class="n">get_iterator</span><span class="o">&lt;</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">(</span><span class="n">last</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl"> 
+</span></span><span class="line"><span class="cl">  <span class="n">values_</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">values_</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span>
+</span></span><span class="line"><span class="cl">      <span class="n">Traits</span><span class="o">::</span><span class="k">template</span> <span class="n">get_iterator</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">first</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">      <span class="n">Traits</span><span class="o">::</span><span class="k">template</span> <span class="n">get_iterator</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">last</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h2 class="heading-element" id="testing-in-libc"><span>Testing in libc++</span>
+  <a href="#testing-in-libc" class="heading-mark">
+    <svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg>
+  </a>
+</h2><p>这部分没细看了……对不住了……</p>
+<h2 class="heading-element" id="另外"><span>另外</span>
+  <a href="#%e5%8f%a6%e5%a4%96" class="heading-mark">
+    <svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg>
+  </a>
+</h2><p>purecpp每年也有<a href="http://purecpp.cn/detail?id=2468"target="_blank" rel="external nofollow noopener noreferrer"><strong>大会</strong></a>，今年的<strong>正在筹办</strong>，感兴趣的公司或个人可以去支持下！</p></div><div class="post-footer" id="post-footer">
+  <div class="post-info">
+    <div class="post-info-line">
+      <div class="post-info-mod">
+        <span title="更新于 2025-09-25 22:52:13">更新于 2025-09-25&nbsp;</span>
+      </div></div><div class="post-info-line">
+        <div class="post-info-md"><span><a href="/posts/86053000/index.md" title="阅读原始文档" class="link-to-markdown">阅读原始文档</a></span></div>
+        <div class="post-info-share">
+          <span><a href="javascript:void(0);" title="分享到 X" data-sharer="twitter" data-url="https://typecombinator.github.io/posts/86053000/" data-title="CppCon2025笔记之libc&#43;&#43;" data-hashtags="blog"><i class="fa-brands fa-x-twitter fa-fw" aria-hidden="true"></i></a>
+  <a href="javascript:void(0);" title="分享到 Facebook" data-sharer="facebook" data-url="https://typecombinator.github.io/posts/86053000/" data-hashtag="blog"><i class="fa-brands fa-facebook-square fa-fw" aria-hidden="true"></i></a>
+  <a href="javascript:void(0);" title="分享到 微博" data-sharer="weibo" data-url="https://typecombinator.github.io/posts/86053000/" data-title="CppCon2025笔记之libc&#43;&#43;"><i class="fa-brands fa-weibo fa-fw" aria-hidden="true"></i></a>
+  </span>
+        </div>
+      </div></div>
+
+  <div class="post-info-more">
+    <section class="post-tags"><i class="fa-solid fa-tags fa-fw me-1" aria-hidden="true"></i><a href="/tags/blog/" class="post-tag" title="标签 - Blog">Blog</a></section>
+    <section>
+      <span><a href="javascript:void(0);" onclick="window.history.back();">返回</a></span>&nbsp;|&nbsp;<span><a href="/">主页</a></span>
+    </section>
+  </div><div class="post-nav"><a href="/posts/94eb77e/" class="post-nav-item" rel="prev" title="浅谈C&#43;&#43;最佳异步范式"><i class="fa-solid fa-angle-left fa-fw" aria-hidden="true"></i>浅谈C&#43;&#43;最佳异步范式</a></div>
+</div>
+</article>
+
+  <aside class="toc" id="toc-auto" aria-label="目录"><h2 class="toc-title">目录&nbsp;<i class="toc-icon fa-solid fa-angle-down fa-fw" aria-hidden="true"></i></h2>
+      <div class="toc-content" id="toc-content-auto"></div></aside></main><footer class="footer">
+    <div class="footer-container"><div class="footer-line powered">由 <a href="https://gohugo.io/" target="_blank" rel="external nofollow noopener noreferrer" title="Hugo 0.147.5"><img class="hugo-icon" src="/images/hugo.min.svg" alt="Hugo logo" /> Hugo</a> 强力驱动 | 主题 - <a href="https://github.com/hugo-fixit/FixIt" target="_blank" rel="external" title="FixIt v0.3.20"><img class="fixit-icon" src="/images/fixit.min.svg" alt="FixIt logo" /> FixIt</a>
+        </div><div class="footer-line copyright" itemscope itemtype="http://schema.org/CreativeWork"><i class="fa-regular fa-copyright fa-fw" aria-hidden="true"></i>
+            <span itemprop="copyrightYear">2025</span><span class="author" itemprop="copyrightHolder">
+              <a href="https://github.com/TypeCombinator"target="_blank" rel="external nofollow noopener noreferrer">TypeCombinator</a></span></div></div>
+  </footer></div><div class="widgets"><div class="fixed-buttons animate__faster d-none"><div class="fixed-button back-to-top" role="button" aria-label="回到顶部"><i class="fa-solid fa-arrow-up fa-fw" aria-hidden="true"></i><span class="variant-numeric d-none">0%</span>
+        </div></div><div id="mask"></div><noscript>
+    <div class="noscript-warning">该网站在启用 JavaScript 的情况下效果最佳。</div>
+  </noscript>
+</div><link rel="stylesheet" href="/lib/cookieconsent/cookieconsent.min.css"><script src="/lib/sharer/sharer.min.js" async defer></script><script src="/lib/cookieconsent/cookieconsent.min.js" defer></script><script>window.config={"code":{"copyTitle":"复制到剪贴板","editLockTitle":"锁定可编辑代码块","editUnLockTitle":"解锁可编辑代码块","editable":true,"maxShownLines":1000},"comment":{"enable":false},"cookieconsent":{"content":{"dismiss":"同意","link":"了解更多","message":"本网站使用 Cookies 来改善您的浏览体验。"},"enable":true,"palette":{"button":{"background":"#f0f0f0"},"popup":{"background":"#1aa3ff"}},"theme":"edgeless"},"version":"v0.3.20"};</script><script src="/js/theme.min.js" defer></script></body>
+</html>

@@ -8,8 +8,16 @@
     <language>en-us</language>
     <managingEditor>typecombinator@foxmail.com (TypeCombinator)</managingEditor>
     <webMaster>typecombinator@foxmail.com (TypeCombinator)</webMaster>
-    <lastBuildDate>Thu, 18 Sep 2025 09:30:00 +0800</lastBuildDate>
+    <lastBuildDate>Thu, 25 Sep 2025 22:52:13 +0800</lastBuildDate>
     <atom:link href="https://typecombinator.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>CppCon2025笔记之libc&#43;&#43;</title>
+      <link>https://typecombinator.github.io/posts/86053000/</link>
+      <pubDate>Thu, 25 Sep 2025 22:52:13 +0800</pubDate><author>typecombinator@foxmail.com (TypeCombinator)</author>
+      <guid>https://typecombinator.github.io/posts/86053000/</guid>
+      <category domain="https://typecombinator.github.io/categories/c&#43;&#43;/">C&#43;&#43;</category>
+      <description>&lt;p&gt;看到华人小哥，必须得关注一下，演讲题目是《Implement Standard Library: Design Decisions, Optimisations and Testing in Implementing Libc++》，作者&lt;a href=&#34;https://github.com/huixie90&#34;target=&#34;_blank&#34; rel=&#34;external nofollow noopener noreferrer&#34;&gt;&lt;strong&gt;Hui Xie&lt;/strong&gt;&lt;/a&gt;是libc++的贡献者、BSI成员、WG21成员……谈了一些libc++中相关的设计决策、优化和测试细节。本文结合演讲视频和仓库幻灯片整理而来，任何转述错误和个人观点与原作者无关，&lt;strong&gt;推荐观看原视频&lt;/strong&gt;，原作者的讲解更清晰。&lt;/p&gt;</description>
+    </item>
     <item>
       <title>浅谈C&#43;&#43;最佳异步范式</title>
       <link>https://typecombinator.github.io/posts/94eb77e/</link>

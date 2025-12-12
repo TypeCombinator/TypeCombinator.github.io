@@ -1,0 +1,19 @@
+- title: Owner
+  description: Here are some of my personal hobby projects.
+  contentAdapters: false
+  params:
+    hiddenFromHomePage: true
+  categories:
+    - projects
+  collections:
+    - owner
+  # whether to count total stars
+  totalStars: false
+  # Order by, optional values: ['default', 'name', 'star', 'fork']
+  orderby: default
+  # Order of repos, optional values: ['asc', 'desc']
+  order: asc
+  repos:
+    - TypeCombinator/uit
+    - TypeCombinator/eespace
+

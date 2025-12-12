@@ -5,3 +5,6 @@
 [submodule "themes/shortcode-docs-bookmark"]
 	path = themes/shortcode-docs-bookmark
 	url = https://github.com/hugo-fixit/shortcode-docs-bookmark
+[submodule "themes/component-projects"]
+	path = themes/component-projects
+	url = https://github.com/hugo-fixit/component-projects.git

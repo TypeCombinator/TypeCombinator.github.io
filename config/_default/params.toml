@@ -550,6 +550,7 @@ disableThemeInject = false
 [customPartials]
   head = [
     "inject/fixit-docs-bookmark.html",
+    "inject/component-projects.html",
   ]
   profile = []
   aside = []

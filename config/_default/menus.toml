@@ -47,3 +47,14 @@
   weight = 3
   [main.params]
     icon = "fa-solid fa-tags"
+[[main]]
+  identifier = "projects"
+  pre = ""
+  post = ""
+  name = "Projects"
+  url = "/projects/"
+  title = ""
+  weight = 4
+  [main.params]
+    # icon = "fa-solid fa-code-branch"
+    icon = "fa-solid fa-lightbulb fa-shake"

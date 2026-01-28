@@ -15,7 +15,7 @@ license:
 comment: false
 weight: 0
 tags:
-  - log
+  - blog
 categories:
   - c++
 hiddenFromHomePage: false

@@ -146,11 +146,11 @@ static void maintain_left_leaning(np_t &root) noexcept {
 }
 ```
 
- 基于以上思路，任意节点的删除也很容易实现。由于是不带parent指针的实现，需要先进查找，我们可以用一个位图将记录查找路径，向右走就置1，向左走就置0，如果找到了待删除的节点，就用之前的位图恢复下来的路径，并在恢复的过程中维护路径上的节点即可。由于实现没有什么特殊之处，因此代码就不贴在这里了，文末有仓库地址。
+ 基于以上思路，任意节点的删除也很容易实现。由于是不带parent指针的实现，需要先进查找，我们可以用一个位图记录查找路径，向右走就置1，向左走就置0，如果找到了待删除的节点，就用之前的位图恢复下来的路径，并在恢复的过程中维护路径上的节点即可。由于实现没有什么特殊之处，因此代码就不贴在这里了，文末有仓库地址。
 
 ## 尝试自顶向下WBT
 
-自顶向下的节点删除倒是容易解决，但节点加入呢？注意到，旋转改变的连接关系是有限的，如果等节点向下加入到相对当前节点层数足够多的时候，再旋转就是安全的了。到此，我的直觉的想法是维护一个队列，将待向下经过的节点以及路径信息存入，等队列深度达到可以安全旋转的时候再进行维护，代码如下：
+自顶向下的节点删除倒是容易解决，但节点加入呢？注意到，旋转改变的连接关系是有限的，如果等节点向下加入到相对当前节点层数足够多的时候，再旋转就是安全的了。到此，我的直觉想法是维护一个队列，将待向下经过的节点以及路径信息存入，等队列深度达到可以安全旋转的时候再进行维护，代码如下：
 
 ```c++
 void insert_multi_with_queue(np_t node) noexcept {
@@ -182,43 +182,43 @@ void insert_multi_with_queue(np_t node) noexcept {
 
 ```c++
 static void top_down_insert_mainatin(detail::top_down_queue<T> &q) noexcept {
-        auto cur_ptr = q.front_pointer();
-        np_t cur = *cur_ptr;
-        if (q.path_queue() & 1u) { // Right?
-            if ((cur->*Left->*Size * 3 + 1) < cur->*Right->*Size) {
-                if (cur->*Right->*Right->*Size * 2 < (cur->*Right->*Left->*Size + 1)) {
-                    right_rotate(cur->*Right);
-                    left_rotate(*cur_ptr);
+    auto cur_ptr = q.front_pointer();
+    np_t cur = *cur_ptr;
+    if (q.path_queue() & 1u) { // Right?
+        if ((cur->*Left->*Size * 3 + 1) < cur->*Right->*Size) {
+            if (cur->*Right->*Right->*Size * 2 < (cur->*Right->*Left->*Size + 1)) {
+                right_rotate(cur->*Right);
+                left_rotate(*cur_ptr);
 
-                    if ((q.path_queue() & 2u) == 0) { // rl
-                        cur = *cur_ptr;
-                        if (q.path_queue() & 4u) { // rlr
-                            q.template pop<3>();
-                            q.set_front(&(cur->*Right->*Left));
-                        } else { // rll
-                            q.template pop<3>();
-                            q.set_front(&(cur->*Left->*Right));
-                        }
-                    } else { // rr
-                        q.template pop<2>();
+                if ((q.path_queue() & 2u) == 0) { // rl
+                    cur = *cur_ptr;
+                    if (q.path_queue() & 4u) { // rlr
+                        q.template pop<3>();
+                        q.set_front(&(cur->*Right->*Left));
+                    } else { // rll
+                        q.template pop<3>();
+                        q.set_front(&(cur->*Left->*Right));
                     }
-                } else {
-                    left_rotate(*cur_ptr);
-
-                    if (q.path_queue() & 2u) { // rr
-                        q.template pop<2>();
-                    } else { // rl
-                        q.template pop<2>();
-                        q.set_front(&((*cur_ptr)->*Left->*Right));
-                    }
+                } else { // rr
+                    q.template pop<2>();
                 }
             } else {
-                q.pop();
+                left_rotate(*cur_ptr);
+
+                if (q.path_queue() & 2u) { // rr
+                    q.template pop<2>();
+                } else { // rl
+                    q.template pop<2>();
+                    q.set_front(&((*cur_ptr)->*Left->*Right));
+                }
             }
-        } else { // Left
-            // Symmetric branch.
+        } else {
+            q.pop();
         }
+    } else { // Left
+        // Symmetric branch.
     }
+}
 ```
 
 以上实现看起来复杂，但对照前文的节点旋转示意图会非常容易理解。以最简单的单旋为例，当发生左单旋，且新节点加入的是`rr`子树时，由于旋转之后的`rr`节点和父节点`r`的连接关系没有变化，因此只需直接加入`rr`节点之前的元素即可；而如果加入的是`rl`子树，旋转之后，`rl`的父节点由`r`变为了`v`，因此除了要弹出元素之外，还要将后续元素设置为`v-rl`。左右维护的代码是对称的，对比如下：
@@ -233,100 +233,100 @@ static void top_down_insert_mainatin(detail::top_down_queue<T> &q) noexcept {
 
 ```c++
 void insert_multi(np_t node) noexcept {
-        np_t *cur_ptr = &head;
-        np_t cur = head;
-        if (is_sentinel(cur)) [[unlikely]] {
-            insert_leaf(*cur_ptr, node);
-            return;
-        }
-        (cur->*Size)++;
-        while (1) {
-            if (cmp(*node, *cur)) { // l
-                // Symmetric branch.
-            } else { // r
-                np_t right = cur->*Right;
-                if (!is_sentinel(right)) [[likely]] { // look-ahead-1
-                    (right->*Size)++;
-                    if ((cur->*Left->*Size * 3 + 1) < right->*Size) [[unlikely]] {
-                        bool is_rr = !cmp(*node, *right);
-                        nsize_t rr_size = is_rr ? (right->*Right->*Size + 1) : right->*Right->*Size;
-                        np_t *ptr = cur_ptr;
-                        // rl.S = r.S - rr.S -1
-                        if (rr_size * 2 < (right->*Size - rr_size)) { // double-rotate
-                            if (is_rr) {                              // rr
-                                np_t rr = right->*Right;
-                                if (!is_sentinel(rr)) [[likely]] { // look-ahead-2
-                                    (rr->*Size)++;
-                                    cur_ptr = &(right->*Right);
-                                } else {
-                                    insert_leaf(right->*Right, node);
-                                    cur_ptr = nullptr;
-                                }
-                            } else { // rl
-                                np_t rl = right->*Left;
-                                if (!is_sentinel(rl)) [[likely]] { // look-ahead-2
-                                    (rl->*Size)++;
-                                    if (cmp(*node, *rl)) {                        // rll
-                                        if (!is_sentinel(rl->*Left)) [[likely]] { // look-ahead-3
-                                            (rl->*Left->*Size)++;
-                                            cur_ptr = &(cur->*Right);
-                                        } else {
-                                            insert_leaf(rl->*Left, node);
-                                            cur_ptr = nullptr;
-                                        }
-                                    } else {                                       // rlr
-                                        if (!is_sentinel(rl->*Right)) [[likely]] { // look-ahead-3
-                                            (rl->*Right->*Size)++;
-                                            cur_ptr = &(right->*Left);
-                                        } else {
-                                            insert_leaf(rl->*Right, node);
-                                            cur_ptr = nullptr;
-                                        }
+    np_t *cur_ptr = &head;
+    np_t cur = head;
+    if (is_sentinel(cur)) [[unlikely]] {
+        insert_leaf(*cur_ptr, node);
+        return;
+    }
+    (cur->*Size)++;
+    while (1) {
+        if (cmp(*node, *cur)) { // l
+            // Symmetric branch.
+        } else { // r
+            np_t right = cur->*Right;
+            if (!is_sentinel(right)) [[likely]] { // look-ahead-1
+                (right->*Size)++;
+                if ((cur->*Left->*Size * 3 + 1) < right->*Size) [[unlikely]] {
+                    bool is_rr = !cmp(*node, *right);
+                    nsize_t rr_size = is_rr ? (right->*Right->*Size + 1) : right->*Right->*Size;
+                    np_t *ptr = cur_ptr;
+                    // rl.S = r.S - rr.S -1
+                    if (rr_size * 2 < (right->*Size - rr_size)) { // double-rotate
+                        if (is_rr) {                              // rr
+                            np_t rr = right->*Right;
+                            if (!is_sentinel(rr)) [[likely]] { // look-ahead-2
+                                (rr->*Size)++;
+                                cur_ptr = &(right->*Right);
+                            } else {
+                                insert_leaf(right->*Right, node);
+                                cur_ptr = nullptr;
+                            }
+                        } else { // rl
+                            np_t rl = right->*Left;
+                            if (!is_sentinel(rl)) [[likely]] { // look-ahead-2
+                                (rl->*Size)++;
+                                if (cmp(*node, *rl)) {                        // rll
+                                    if (!is_sentinel(rl->*Left)) [[likely]] { // look-ahead-3
+                                        (rl->*Left->*Size)++;
+                                        cur_ptr = &(cur->*Right);
+                                    } else {
+                                        insert_leaf(rl->*Left, node);
+                                        cur_ptr = nullptr;
                                     }
-                                } else {
-                                    insert_leaf(right->*Left, node);
-                                    cur_ptr = nullptr;
+                                } else {                                       // rlr
+                                    if (!is_sentinel(rl->*Right)) [[likely]] { // look-ahead-3
+                                        (rl->*Right->*Size)++;
+                                        cur_ptr = &(right->*Left);
+                                    } else {
+                                        insert_leaf(rl->*Right, node);
+                                        cur_ptr = nullptr;
+                                    }
                                 }
+                            } else {
+                                insert_leaf(right->*Left, node);
+                                cur_ptr = nullptr;
                             }
-                            right_rotate(cur->*Right);
-                            left_rotate(*ptr);
-                        } else {         // single-rotate
-                            if (is_rr) { // rr
-                                np_t rr = right->*Right;
-                                if (!is_sentinel(rr)) [[likely]] { // look-ahead-2
-                                    (rr->*Size)++;
-                                    cur_ptr = &(right->*Right);
-                                } else {
-                                    insert_leaf(right->*Right, node);
-                                    cur_ptr = nullptr;
-                                }
-                            } else { // rl
-                                np_t rl = right->*Left;
-                                if (!is_sentinel(rl)) [[likely]] { // look-ahead-2
-                                    (rl->*Size)++;
-                                    cur_ptr = &(cur->*Right);
-                                } else {
-                                    insert_leaf(right->*Left, node);
-                                    cur_ptr = nullptr;
-                                }
+                        }
+                        right_rotate(cur->*Right);
+                        left_rotate(*ptr);
+                    } else {         // single-rotate
+                        if (is_rr) { // rr
+                            np_t rr = right->*Right;
+                            if (!is_sentinel(rr)) [[likely]] { // look-ahead-2
+                                (rr->*Size)++;
+                                cur_ptr = &(right->*Right);
+                            } else {
+                                insert_leaf(right->*Right, node);
+                                cur_ptr = nullptr;
                             }
-                            left_rotate(*ptr);
+                        } else { // rl
+                            np_t rl = right->*Left;
+                            if (!is_sentinel(rl)) [[likely]] { // look-ahead-2
+                                (rl->*Size)++;
+                                cur_ptr = &(cur->*Right);
+                            } else {
+                                insert_leaf(right->*Left, node);
+                                cur_ptr = nullptr;
+                            }
                         }
-                        if (cur_ptr == nullptr) [[unlikely]] {
-                            return;
-                        }
-                        cur = *cur_ptr;
-                    } else {
-                        cur_ptr = &(cur->*Right);
-                        cur = right;
+                        left_rotate(*ptr);
                     }
+                    if (cur_ptr == nullptr) [[unlikely]] {
+                        return;
+                    }
+                    cur = *cur_ptr;
                 } else {
-                    insert_leaf(cur->*Right, node);
-                    return;
+                    cur_ptr = &(cur->*Right);
+                    cur = right;
                 }
+            } else {
+                insert_leaf(cur->*Right, node);
+                return;
             }
         }
     }
+}
 ```
 
 以上代码看起来多，但是和前文的旋转示意图是完全对应的，对着图看并不复杂，而左右维护的代码是对称的，对比如下：

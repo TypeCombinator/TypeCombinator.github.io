@@ -59,7 +59,7 @@ repost:
 - `(v.L.S + 1) * ∆ ≥ (v.R.S + 1)`
 - `(v.R.S + 1) * ∆ ≥ (v.L.S + 1)`
 
-以上的参数`∆`用于判断是否平衡，而参数`Γ`则用于控制是否双旋，当`(v.L.S + 1) * ∆ < (v.R.S + 1)`时，节点`v`发生了右倾，如果`(v.R.R.S + 1) * Γ < (v.R.L.S + 1)`，则对节点`v`向左双旋，否则值对节点`v`向左单旋。而树`v`左倾是右倾的镜像情形，此处无需赘述。Yoichi Hirai的Kazuhiko Yamamoto在2011年的论文[Balancing weight-balanced trees](https://yoichihirai.com/bst.pdf)中已经指明，WBT唯一整数平衡参数`<∆,Γ>`是`<3,2>`。
+以上的参数`∆`用于判断是否平衡，而参数`Γ`则用于控制是否双旋，当`(v.L.S + 1) * ∆ < (v.R.S + 1)`时，节点`v`发生了右倾，如果`(v.R.R.S + 1) * Γ < (v.R.L.S + 1)`，则对节点`v`向左双旋，否则只对节点`v`向左单旋。而树`v`左倾是右倾的镜像情形，此处无需赘述。Yoichi Hirai的Kazuhiko Yamamoto在2011年的论文[Balancing weight-balanced trees](https://yoichihirai.com/bst.pdf)中已经指明，WBT唯一整数平衡参数`<∆,Γ>`是`<3,2>`。
 
 WBT虽然好写，但性能表现一般，而不带parent指针的递归实现（通常）性能则更差。前面提到**自顶向下**的维护可以避免递归，此时不得不提[Engineering Top-Down Weight-Balanced Trees](https://arxiv.org/pdf/1910.07849)这篇论文了，该作者在文中给出了自顶向下WBT的详细性能测试数据，也证明了自顶向下的WBT是可以比RBT性能更好的。有别于该论文的带parent指针的实现，本文使用了不带parent指针的实现，而且经过笔者实践，文中提到的「参数`<3,2>`在自顶向下的情况下可能并非可行选择」这句话并不正确，笔者在2种不同的实现下验证，参数`<3,2>`依然是自顶向下WBT正确的选择，如果在该参数下出现违反平衡，笔者认为可能是代码哪里没写对。
 
@@ -293,7 +293,7 @@ void insert_multi(np_t node) noexcept {
                         } else {         // single-rotate
                             if (is_rr) { // rr
                                 np_t rr = right->*Right;
-                                if (!is_sentinel(rr)) [[likely]] { // look-ahead-1
+                                if (!is_sentinel(rr)) [[likely]] { // look-ahead-2
                                     (rr->*Size)++;
                                     cur_ptr = &(right->*Right);
                                 } else {
@@ -302,7 +302,7 @@ void insert_multi(np_t node) noexcept {
                                 }
                             } else { // rl
                                 np_t rl = right->*Left;
-                                if (!is_sentinel(rl)) [[likely]] { // look-ahead-1
+                                if (!is_sentinel(rl)) [[likely]] { // look-ahead-2
                                     (rl->*Size)++;
                                     cur_ptr = &(cur->*Right);
                                 } else {

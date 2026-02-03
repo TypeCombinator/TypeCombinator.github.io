@@ -10,8 +10,7 @@ theme = [
   "shortcode-docs-bookmark",
   "component-projects",
 ]
-defaultContentLanguage = "en"
-languageCode = "en"
+defaultContentLanguage = "zh-cn"
 hasCJKLanguage = true
 enableRobotsTXT = true
 enableEmoji = true

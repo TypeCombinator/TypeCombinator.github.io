@@ -180,5 +180,5 @@ All Rank-Balanced Trees support top-down maintenance, but **a top-down maintenan
 
 When a Rank-Balanced Tree becomes unbalanced, two techniques are used to restore balance:
 
-- The first is **leveling**, specifically promotion or demotion, which corresponds to recoloring in Red-Black Trees. Leveling computes the rank from the left and right subtrees and ensures the rank difference satisfies the balance constraint;
+- The first is **rank balancing**, specifically promotion or demotion, which corresponds to recoloring in red-black trees. This ensures not only that the absolute ranks computed from the left and right subtrees are equal, but also that the rank differences satisfy the balance constraints.
 - The second is **rotation**. A subtree with a larger rank is taller, so among sibling nodes, the one with the smaller rank difference is taller. Rotation essentially adjusts the taller subtree toward the shorter sibling, selecting a node closer to the binary split as the root, making the tree more balanced.

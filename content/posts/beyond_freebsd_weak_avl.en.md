@@ -44,7 +44,7 @@ In a previous article about WBT (Weight-Balanced Trees), we saw that FreeBSD's W
 <!--more-->
 ## A More Understandable Red-Black Tree Deletion Algorithm: Parity-Seeking
 
-The complexity of Red-Black Trees is mainly concentrated in the node deletion algorithm, so this article skips the node insertion algorithm. There are many variants of Red-Black Trees. If we order the constraints on red nodes from strongest to weakest: left-leaning red-black tree `==` AA tree `>` 2-3 red-black tree `>` 2-3-4 red-black tree. For clarity, the subsequent content of this article is limited to 2-3 red-black trees and 2-3-4 red-black trees, both of which share the same deletion algorithm — the protagonist of this article: **Parity-Seeking**. If I were to translate it into Chinese, I think "**找平**" (level-seeking) might be a fitting term.
+The complexity of Red-Black Trees is mainly concentrated in the node deletion algorithm, so this article skips the node insertion algorithm. There are many variants of Red-Black Trees. If we order the constraints on red nodes from strongest to weakest: left-leaning red-black tree `==` AA tree `>` 2-3 red-black tree `>` 2-3-4 red-black tree. For clarity, the subsequent content of this article is limited to 2-3 red-black trees and 2-3-4 red-black trees, both of which share the same deletion algorithm, which is the protagonist of this article: **Parity-Seeking**. If I were to translate it into Chinese, I think "**找平**" (level-seeking) might be a fitting term.
 
 ### Simple Cases
 
@@ -74,7 +74,7 @@ What requires further handling is the deletion of a black leaf node. To address 
 
 <center><b>Figure13b</b></center>
 
-3. `x` is black and `y` is red. At this point, a single rotation is needed. If `x` is a left child, perform a left rotation on `x`'s parent; otherwise, perform a right rotation on `x`'s parent, as shown in **Figure13c**. Note the positions of `x` and `y` after the rotation — the node representing `x` has not changed.
+3. `x` is black and `y` is red. At this point, a single rotation is needed. If `x` is a left child, perform a left rotation on `x`'s parent; otherwise, perform a right rotation on `x`'s parent, as shown in **Figure13c**. Note the positions of `x` and `y` after the rotation: the node representing `x` has not changed.
 ![](/blog/beyond_freebsd_weak_avl/figure13c.png)
 
 <center><b>Figure13c</b></center>
@@ -90,13 +90,13 @@ For **Case 2**, the sibling of the deficient subtree has been colored red. If th
 
 <center><b>Figure15b</b></center>
 
-The rotation rules above are consistent with the insertion rotation rules. When `z`'s red child and `z` are both left children or both right children, perform a single rotation as shown in **Figure15b**. Otherwise, first perform a single rotation as shown in **Figure15a** to transform it into the **Figure15b** case — this corresponds to a double rotation. After the rotations in **Figure15a** and **Figure15b**, the deficient subtree `x` will have 2 red children. At this point, simply coloring these 2 red children black increases the black height of the deficient subtree `x` by 1, completing the repair.
+The rotation rules above are consistent with the insertion rotation rules. When `z`'s red child and `z` are both left children or both right children, perform a single rotation as shown in **Figure15b**. Otherwise, first perform a single rotation as shown in **Figure15a** to transform it into the **Figure15b** case, which corresponds to a double rotation. After the rotations in **Figure15a** and **Figure15b**, the deficient subtree `x` will have 2 red children. At this point, simply coloring these 2 red children black increases the black height of the deficient subtree `x` by 1, completing the repair.
 
 ![](/blog/beyond_freebsd_weak_avl/figure15c.png)
 
 <center><b>Figure15c</b></center>
 
-At this point, we have almost covered all deletion cases. But what if the deficient subtree `x` propagates all the way to the root? Obviously, nothing needs to be done — this simply means the black height of the entire Red-Black Tree has decreased by 1.
+At this point, we have almost covered all deletion cases. But what if the deficient subtree `x` propagates all the way to the root? Obviously, nothing needs to be done, since this simply means the black height of the entire Red-Black Tree has decreased by 1.
 
 ### Summary
 
@@ -104,7 +104,7 @@ At this point, we have almost covered all deletion cases. But what if the defici
 
 ## Practice
 
-Strictly speaking, the **Parity-Seeking** deletion algorithm may not truly qualify as a new algorithm. After appropriate optimization and adjustments, its implementation code is in fact completely equivalent to the classic Red-Black Tree deletion algorithm. This is not to diminish its value — when I revisit the classic deletion algorithm now, my mind naturally applies the **Parity-Seeking** way of thinking. If textbooks had presented the deletion algorithm this way from the beginning, perhaps I wouldn't have held a bad impression for so long. For implementation simplicity, the paper uses a sentinel node `nilSentinel`, which differs from how I previously used sentinel nodes in my WBT implementation. This `nilSentinel` is used not only for leaf nodes but also for the root node, which requires `nilSentinel` to be dynamic — each tree must allocate its own sentinel node, and even trees of the same type cannot share one. After weighing the trade-offs, I chose not to adopt any sentinel node optimization and simply re-implemented both the 2-3 and 2-3-4 Red-Black Trees in the traditional way.
+Strictly speaking, the **Parity-Seeking** deletion algorithm may not truly qualify as a new algorithm. After appropriate optimization and adjustments, its implementation code is in fact completely equivalent to the classic Red-Black Tree deletion algorithm. This is not to diminish its value. When I revisit the classic deletion algorithm now, my mind naturally applies the **Parity-Seeking** way of thinking. If textbooks had presented the deletion algorithm this way from the beginning, perhaps I wouldn't have held a bad impression for so long. For implementation simplicity, the paper uses a sentinel node `nilSentinel`, which differs from how I previously used sentinel nodes in my WBT implementation. This `nilSentinel` is used not only for leaf nodes but also for the root node, which requires `nilSentinel` to be dynamic: each tree must allocate its own sentinel node, and even trees of the same type cannot share one. After weighing the trade-offs, I chose not to adopt any sentinel node optimization and simply re-implemented both the 2-3 and 2-3-4 Red-Black Trees in the traditional way.
 
 ### Element Insertion
 
@@ -133,7 +133,7 @@ As can be seen above, the element insertion performance of the 2-3 and 2-3-4 Red
 
 ![](/blog/beyond_freebsd_weak_avl/ordered_insert_bench.png)
 
-As shown above, in the ordered data scenario, the performance of my 2-3 and 2-3-4 Red-Black Tree implementations completely collapsed. Why? It's because I used `cmov` instructions to optimize some branches, and ordered data makes the branch predictor very happy — `cmov` has no advantage in this scenario. The solution is simple: control this with a **template parameter** — use `cmov` for random data and branch jumps for ordered data. When using branch jumps, the performance of my Red-Black Tree implementations is essentially on par with Linux's Red-Black Tree.
+As shown above, in the ordered data scenario, the performance of my 2-3 and 2-3-4 Red-Black Tree implementations completely collapsed. Why? It's because I used `cmov` instructions to optimize some branches, and ordered data makes the branch predictor very happy, while `cmov` has no advantage in this scenario. The solution is simple: control this with a **template parameter**, using `cmov` for random data and branch jumps for ordered data. When using branch jumps, the performance of my Red-Black Tree implementations is essentially on par with Linux's Red-Black Tree.
 
 ### Element Deletion
 

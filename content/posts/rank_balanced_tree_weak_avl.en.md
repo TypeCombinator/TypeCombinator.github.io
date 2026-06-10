@@ -40,7 +40,7 @@ repost:
 
 # See details front matter: https://fixit.lruihao.cn/documentation/content-management/introduction/#front-matter
 ---
-In the paper [Rank-Balanced Trees](https://sidsen.azurewebsites.net/papers/rb-trees-talg.pdf), the authors unify AVL trees and Red-Black Trees under the concept of **rank**-balanced trees, and also propose the WAVL (Weak AVL) tree. Compared to Red-Black Trees, where node deletion can require up to 3 rotations (when the sibling of the **deficient subtree** is red), WAVL tree deletion requires at most 2 rotations. Like Red-Black Trees, for a WAVL tree with `n` nodes, the maximum tree height is `2 lg n`.
+In the paper [Rank-Balanced Trees](https://sidsen.azurewebsites.net/papers/rb-trees-talg.pdf), the authors unify AVL trees and Red-Black Trees under the concept of **rank**-balanced trees, and also propose the WAVL (Weak AVL) tree. Compared to Red-Black Trees, where node deletion can require up to 3 rotations (when the sibling of the **deficient subtree** is red), WAVL tree deletion requires at most 2 rotations. Like Red-Black Trees, for a WAVL tree with `n` nodes, the maximum tree height is `2lgn`.
 <!--more-->
 
 ## Rank-Balanced Tree
